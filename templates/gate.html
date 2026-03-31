@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gate Display</title>
+    <link rel="stylesheet" href="/static/css/gate.css">
+</head>
+<body>
+    <main class="gate-wrap">
+        <div class="gate-card">
+            <h1>Smart Parking Gate</h1>
+            <div class="mode-pill" id="gateMode">ENTRY</div>
+            <p class="gate-message" id="gateMessage">Vehicle detected. Scan QR / Open entry form</p>
+            <p class="vehicle-text">Vehicle: <span id="gateVehicle">--</span></p>
+            <div class="status-dot" id="statusDot"></div>
+            <a class="entry-link" href="/">Open Entry Form</a>
+        </div>
+    </main>
+    <script src="/static/js/gate-display.js"></script>
+</body>
+</html>

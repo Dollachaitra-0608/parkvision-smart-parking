@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Parkvision - User Dashboard</title>
+    <link rel="stylesheet" href="/static/css/user.css">
+</head>
+<body>
+
+<!-- Header -->
+<header class="header">
+    <div class="header-container">
+        <div class="logo">
+            <img src="/static/images/logo.png" alt="logo">
+            <span class="logo-text">Parkvision</span>
+        </div>
+       <div class="nav-right">
+    <div class="menu-icon" onclick="toggleMenu()">☰</div>
+    <div id="dropdownMenu" class="dropdown" style="display:none;">
+        <a href="/user-history">History Page</a>
+    </div>
+</div>
+    </div>
+</header>
+
+<!-- Main Content -->
+<main class="main-content">
+
+    <!-- Slot Info -->
+    <div class="info-card">
+        <div class="info-row">
+            <div class="info-item">
+                <span class="info-icon">📍</span>
+                <div>
+                    <span class="info-label">Slot:</span>
+                    <span class="info-value" id="slotValue">--</span>
+                </div>
+            </div>
+            <div class="info-item">
+                <span class="info-icon">Ⓟ</span>
+                <div>
+                    <span class="info-label">Level:</span>
+                    <span class="info-value" id="levelValue">--</span>
+                </div>
+            </div>
+        </div>
+
+        <hr class="divider">
+
+        <div class="vehicle-info">
+            <span class="vehicle-icon">🚗</span>
+            <div>
+                <span class="info-label">Vehicle No.:</span>
+                <span class="info-value" id="vehicleValue">--</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Timer + Payment -->
+    <div class="timer-payment-container">
+
+        <!-- Timer -->
+       <div class="timer-section">
+    <h3 class="section-title">Parking Timer</h3>
+
+    <div class="timer" id="timer">00:00:00</div>
+
+    <!-- Warning notifications -->
+    <div id="warningMsg" style="color:#e67e22;font-weight:bold;margin-top:10px;"></div>
+
+    <!-- Overtime display -->
+    <div id="overtimeContainer" style="display:none;margin-top:10px;">
+        <span style="color:red;font-weight:bold;">Overtime:</span>
+        <span id="overtimeTimer" style="color:red;font-weight:bold;">00:00:00</span>
+        <div style="color:red;">Extra charges ₹15 / 15 mins</div>
+    </div>
+
+    <!-- Extend parking button -->
+    <button id="extendBtn" class="extend-btn">
+        Extend Parking
+    </button>
+
+    <div id="extendOptions" class="extend-options">
+        <button onclick="extendParking(15)">+15 min</button>
+        <button onclick="extendParking(30)">+30 min</button>
+        <button onclick="extendParking(60)">+1 hour</button>
+    </div>
+    </div>
+    </div>
+
+        <!-- Details -->
+        <div class="details-section">
+            <div class="detail-item">
+                <span class="detail-label">Total Duration</span>
+                <span class="detail-value" id="totalDuration">00:00:00</span>
+            </div>
+
+            <div class="detail-item">
+                <span class="detail-label">Parking Rate</span>
+                <span class="detail-value">₹10 / 15 mins (rounded up)</span>
+            </div>
+        </div>
+
+        <!-- Payment -->
+        <div class="payment-section">
+            <h3 class="section-title">Total Payment</h3>
+
+            <div class="payment-item">
+                <span>Parking:</span>
+                <span class="payment-value">
+                    Rs. <span id="parkingCost">0.00</span>
+                </span>
+            </div>
+
+            <div class="payment-item">
+                <span>Total:</span>
+                <span class="total-value">
+                    Rs. <span id="totalCost">0.00</span>
+                </span>
+            </div>
+
+            <button class="pay-btn" id="payBtn">Pay now</button>
+        </div>
+
+    </div>
+
+</main>
+
+<script src="/static/js/user.js"></script>
+
+</body>
+</html>

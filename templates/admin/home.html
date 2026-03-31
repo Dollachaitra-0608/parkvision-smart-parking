@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Parking Management - Home</title>
+    <link rel="stylesheet" href="/static/css/home-styles.css">
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="header-left">
+            <div class="logo">
+        <img src="/static/images/logo.png" alt="logo">
+        </div>
+        </div>
+        <nav class="nav-menu">
+            <a href="/admin" class="nav-link active">Home</a>
+            <a href="/admin/history" class="nav-link">History</a>
+            <a href="/admin/statistics" class="nav-link">Statistics</a>
+        </nav>
+        <div class="header-right">
+            <div class="user-dropdown">
+                <button class="user-btn">
+                    <span class="user-icon">👤</span>
+                    <span class="dropdown-arrow">▼</span>
+                </button>
+                <div class="dropdown-menu">
+                    <a href="#profile">Profile</a>
+                    <a href="#settings">Settings</a>
+                    <a href="#logout">Logout</a>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="main-container">
+        <!-- Stats Section -->
+        <section class="stats-section">
+            <div class="stat-card total-slots">
+                <div class="stat-icon">P</div>
+                <div class="stat-content">
+                    <p class="stat-label">Total Parking Slots</p>
+                    <p class="stat-value" id="totalSlots">0</p>
+                </div>
+            </div>
+            <div class="stat-card available-slots">
+                <div class="stat-icon">✓</div>
+                <div class="stat-content">
+                    <p class="stat-label">Available Slots</p>
+                    <p class="stat-value" id="availableSlots">0</p>
+                </div>
+            </div>
+            <div class="stat-card occupied-slots">
+                <div class="stat-icon">🚗</div>
+                <div class="stat-content">
+                    <p class="stat-label">Occupied Slots</p>
+                    <p class="stat-value" id="occupiedSlots">0</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Content Section -->
+        <section class="content-section">
+
+<!-- Sidebar -->
+<aside class="sidebar">
+    <h3 class="sidebar-title">Parking Entry List</h3>
+    <div class="entry-list" id="entryListContainer"></div>
+</aside>
+
+
+<!-- Parking Visualization -->
+<div class="parking-section">
+
+<div class="parking-lot">
+
+<!-- G0 -->
+<div class="parking-floor">
+<div class="floor-label">G0</div>
+<div class="parking-slots">
+<div class="slot available" data-slot="G0-1"><span>G0-1</span></div>
+<div class="slot available" data-slot="G0-2"><span>G0-2</span></div>
+<div class="slot available" data-slot="G0-3"><span>G0-3</span></div>
+<div class="slot available" data-slot="G0-4"><span>G0-4</span></div>
+<div class="slot available" data-slot="G0-5"><span>G0-5</span></div>
+<div class="slot available" data-slot="G0-6"><span>G0-6</span></div>
+<div class="slot available" data-slot="G0-7"><span>G0-7</span></div>
+<div class="slot available" data-slot="G0-8"><span>G0-8</span></div>
+<div class="slot available" data-slot="G0-9"><span>G0-9</span></div>
+<div class="slot available" data-slot="G0-10"><span>G0-10</span></div>
+<div class="slot available" data-slot="G0-11"><span>G0-11</span></div>
+<div class="slot available" data-slot="G0-12"><span>G0-12</span></div>
+<div class="slot available" data-slot="G0-13"><span>G0-13</span></div>
+<div class="slot available" data-slot="G0-14"><span>G0-14</span></div>
+<div class="slot available" data-slot="G0-15"><span>G0-15</span></div>
+<div class="slot available" data-slot="G0-16"><span>G0-16</span></div>
+<div class="slot available" data-slot="G0-17"><span>G0-17</span></div>
+<div class="slot available" data-slot="G0-18"><span>G0-18</span></div>
+<div class="slot available" data-slot="G0-19"><span>G0-19</span></div>
+<div class="slot available" data-slot="G0-20"><span>G0-20</span></div>
+</div>
+</div>
+
+<!-- G1 -->
+<div class="parking-floor">
+<div class="floor-label">G1</div>
+<div class="parking-slots">
+<div class="slot available" data-slot="G1-1"><span>G1-1</span></div>
+<div class="slot available" data-slot="G1-2"><span>G1-2</span></div>
+<div class="slot available" data-slot="G1-3"><span>G1-3</span></div>
+<div class="slot available" data-slot="G1-4"><span>G1-4</span></div>
+<div class="slot available" data-slot="G1-5"><span>G1-5</span></div>
+<div class="slot available" data-slot="G1-6"><span>G1-6</span></div>
+<div class="slot available" data-slot="G1-7"><span>G1-7</span></div>
+<div class="slot available" data-slot="G1-8"><span>G1-8</span></div>
+<div class="slot available" data-slot="G1-9"><span>G1-9</span></div>
+<div class="slot available" data-slot="G1-10"><span>G1-10</span></div>
+<div class="slot available" data-slot="G1-11"><span>G1-11</span></div>
+<div class="slot available" data-slot="G1-12"><span>G1-12</span></div>
+<div class="slot available" data-slot="G1-13"><span>G1-13</span></div>
+<div class="slot available" data-slot="G1-14"><span>G1-14</span></div>
+<div class="slot available" data-slot="G1-15"><span>G1-15</span></div>
+<div class="slot available" data-slot="G1-16"><span>G1-16</span></div>
+<div class="slot available" data-slot="G1-17"><span>G1-17</span></div>
+<div class="slot available" data-slot="G1-18"><span>G1-18</span></div>
+<div class="slot available" data-slot="G1-19"><span>G1-19</span></div>
+<div class="slot available" data-slot="G1-20"><span>G1-20</span></div>
+</div>
+</div>
+
+<!-- G2 -->
+<div class="parking-floor">
+<div class="floor-label">G2</div>
+<div class="parking-slots">
+<div class="slot available" data-slot="G2-1"><span>G2-1</span></div>
+<div class="slot available" data-slot="G2-2"><span>G2-2</span></div>
+<div class="slot available" data-slot="G2-3"><span>G2-3</span></div>
+<div class="slot available" data-slot="G2-4"><span>G2-4</span></div>
+<div class="slot available" data-slot="G2-5"><span>G2-5</span></div>
+<div class="slot available" data-slot="G2-6"><span>G2-6</span></div>
+<div class="slot available" data-slot="G2-7"><span>G2-7</span></div>
+<div class="slot available" data-slot="G2-8"><span>G2-8</span></div>
+<div class="slot available" data-slot="G2-9"><span>G2-9</span></div>
+<div class="slot available" data-slot="G2-10"><span>G2-10</span></div>
+<div class="slot available" data-slot="G2-11"><span>G2-11</span></div>
+<div class="slot available" data-slot="G2-12"><span>G2-12</span></div>
+<div class="slot available" data-slot="G2-13"><span>G2-13</span></div>
+<div class="slot available" data-slot="G2-14"><span>G2-14</span></div>
+<div class="slot available" data-slot="G2-15"><span>G2-15</span></div>
+<div class="slot available" data-slot="G2-16"><span>G2-16</span></div>
+<div class="slot available" data-slot="G2-17"><span>G2-17</span></div>
+<div class="slot available" data-slot="G2-18"><span>G2-18</span></div>
+<div class="slot available" data-slot="G2-19"><span>G2-19</span></div>
+<div class="slot available" data-slot="G2-20"><span>G2-20</span></div>
+</div>
+</div>
+
+<!-- G3 -->
+<div class="parking-floor">
+<div class="floor-label">G3</div>
+<div class="parking-slots">
+<div class="slot available" data-slot="G3-1"><span>G3-1</span></div>
+<div class="slot available" data-slot="G3-2"><span>G3-2</span></div>
+<div class="slot available" data-slot="G3-3"><span>G3-3</span></div>
+<div class="slot available" data-slot="G3-4"><span>G3-4</span></div>
+<div class="slot available" data-slot="G3-5"><span>G3-5</span></div>
+<div class="slot available" data-slot="G3-6"><span>G3-6</span></div>
+<div class="slot available" data-slot="G3-7"><span>G3-7</span></div>
+<div class="slot available" data-slot="G3-8"><span>G3-8</span></div>
+<div class="slot available" data-slot="G3-9"><span>G3-9</span></div>
+<div class="slot available" data-slot="G3-10"><span>G3-10</span></div>
+<div class="slot available" data-slot="G3-11"><span>G3-11</span></div>
+<div class="slot available" data-slot="G3-12"><span>G3-12</span></div>
+<div class="slot available" data-slot="G3-13"><span>G3-13</span></div>
+<div class="slot available" data-slot="G3-14"><span>G3-14</span></div>
+<div class="slot available" data-slot="G3-15"><span>G3-15</span></div>
+<div class="slot available" data-slot="G3-16"><span>G3-16</span></div>
+<div class="slot available" data-slot="G3-17"><span>G3-17</span></div>
+<div class="slot available" data-slot="G3-18"><span>G3-18</span></div>
+<div class="slot available" data-slot="G3-19"><span>G3-19</span></div>
+<div class="slot available" data-slot="G3-20"><span>G3-20</span></div>
+</div>
+</div>
+<h3>Parking Allocation by Vehicle Type</h3>
+    <div class="legend-items">
+        <div class="legend-box bike">Bike Parking → G0</div>
+        <div class="legend-box car">Car Parking → G1, G2 G3</div>
+        <div class="legend-box jeep">Heavy Vehicles Parking → G3</div>
+    </div>
+    </main>
+</body>
+    <!-- Tooltip (required for slot hover) -->
+    <div id="tooltip" class="tooltip hidden">
+        <div class="tooltip-content">
+            <p class="tooltip-slot" id="tooltip-slot">—</p>
+            <p><strong>Vehicle:</strong> <span id="tooltip-vehicle">—</span></p>
+            <p><strong>Entry date:</strong> <span id="tooltip-entry-date">—</span></p>
+            <p><strong>Entry time:</strong> <span id="tooltip-entry-time">—</span></p>
+            <p><strong>Predicted exit:</strong> <span id="tooltip-exit-time">—</span></p>
+            <p><strong>Status:</strong> <span id="tooltip-overtime">—</span></p>
+        </div>
+    </div>
+<script src="/static/js/admin-auth.js"></script>
+<script src="/static/js/home-script.js"></script>
+</html>

@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Parking History</title>
+    <link rel="stylesheet" href="/static/css/history-styles.css">
+</head>
+<body>
+   <!-- Header -->
+    <header class="header">
+        <div class="header-left">
+            <div class="logo">
+        <img src="/static/images/logo.png" alt="logo">
+        </div>
+        </div>
+        <nav class="nav-menu">
+            <a href="/admin" class="nav-link">Home</a>
+            <a href="/admin/history" class="nav-link active">History</a>
+            <a href="/admin/statistics" class="nav-link">Statistics</a>
+        </nav>
+        <div class="header-right">
+            <div class="user-dropdown">
+                <button class="user-btn">
+                    <span class="user-icon">👤</span>
+                    <span class="dropdown-arrow">▼</span>
+                </button>
+                <div class="dropdown-menu">
+                    <a href="#profile">Profile</a>
+                    <a href="#settings">Settings</a>
+                    <a href="#logout">Logout</a>
+                </div>
+            </div>
+        </div>
+    </header>
+    <!-- Main Content -->
+    <main class="main-content">
+        <!-- Title Section -->
+        <div class="title-section">
+            <h1 class="page-title">Slot History</h1>
+            <div class="action-buttons">
+                <button class="btn btn-pdf" id="downloadPdfBtn">Download PDF</button>
+                <button class="btn btn-csv" id="downloadCsvBtn">Download CSV</button>
+            </div>
+        </div>
+
+        <!-- Filter Section -->
+        <div class="filter-section">
+            <div class="filter-group">
+                <div class="search-box">
+                    <span class="search-icon">🔍</span>
+                    <input type="text" id="vehicleTypeSearch" placeholder="Vehicle Type" class="filter-input">
+                </div>
+                <select id="levelFilter" class="filter-input filter-select">
+                    <option value="">Filter by level</option>
+                    <option value="G0">G0</option>
+                    <option value="G1">G1</option>
+                    <option value="G2">G2</option>
+                    <option value="G3">G3</option>
+                </select>
+                <input type="date" id="dateFilter" class="filter-input filter-date">
+                <button class="btn btn-clear" id="clearFilterBtn">Clear Filter</button>
+            </div>
+        </div>
+
+        <!-- Table Section -->
+        <div class="table-container">
+            <table class="history-table">
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Vehicle no.</th>
+                        <th>Vehicle Type</th>
+                        <th>Slot</th>
+                        <th>Entry time</th>
+                        <th>Exit time</th>
+                        <th>payment</th>
+                    </tr>
+                </thead>
+                <tbody id="historyTableBody">
+                    <!-- Data will be inserted here from backend -->
+                    <tr>
+                        <td colspan="7" class="empty-state">No data available. Apply filters to load data from backend.</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Pagination (optional, for backend integration) -->
+        <div class="pagination" id="paginationContainer">
+            <!-- Pagination controls will be added here -->
+        </div>
+    </main>
+
+    <script src="/static/js/admin-auth.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+    <script src="/static/js/history-script.js"></script>
+</body>
+</html>
