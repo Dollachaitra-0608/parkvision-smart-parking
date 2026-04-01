@@ -1,22 +1,172 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gate Display</title>
-    <link rel="stylesheet" href="/static/css/gate.css">
+  <meta charset="UTF-8"/>
+  <title>ParkVision — Display Screen</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: #0f1117; color: #e2e8f0;
+      min-height: 100vh;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      gap: 24px; padding: 32px;
+    }
+    h1 { font-size: 1.8rem; font-weight: 700; }
+    .mode-pill {
+      padding: 6px 24px; border-radius: 999px;
+      font-weight: 700; font-size: 1rem; letter-spacing: 0.06em;
+    }
+    .pill-entry  { background: rgba(59,130,246,0.2);  color: #60a5fa; }
+    .pill-exit   { background: rgba(34,197,94,0.2);   color: #4ade80; }
+    .pill-pay    { background: rgba(239,68,68,0.2);   color: #f87171; }
+    .pill-idle   { background: rgba(148,163,184,0.15); color: #94a3b8; }
+    .message-box {
+      font-size: 1.3rem; text-align: center;
+      max-width: 500px; line-height: 1.6;
+      color: #cbd5e1;
+    }
+    #qr-wrapper {
+      background: #fff; padding: 20px; border-radius: 16px;
+      display: none;
+    }
+    .pay-remind {
+      font-size: 1.5rem; font-weight: 700;
+      color: #f87171; text-align: center;
+      display: none;
+    }
+    .updated { font-size: 0.78rem; color: #475569; margin-top: 8px; }
+
+    /* Exit form */
+    .exit-form {
+      display: flex; gap: 12px; align-items: center; margin-top: 8px;
+    }
+    .exit-form input {
+      padding: 10px 14px; border-radius: 8px;
+      border: 1px solid #334155; background: #1e293b;
+      color: #e2e8f0; font-size: 1rem; width: 200px;
+    }
+    .exit-form button {
+      padding: 10px 20px; border-radius: 8px;
+      background: #3b82f6; color: #fff;
+      border: none; cursor: pointer; font-size: 1rem;
+    }
+    .exit-form button:hover { background: #2563eb; }
+    .result-msg {
+      font-size: 1rem; text-align: center; min-height: 28px;
+      margin-top: 6px;
+    }
+    .ok  { color: #4ade80; }
+    .err { color: #f87171; }
+  </style>
 </head>
 <body>
-    <main class="gate-wrap">
-        <div class="gate-card">
-            <h1>Smart Parking Gate</h1>
-            <div class="mode-pill" id="gateMode">ENTRY</div>
-            <p class="gate-message" id="gateMessage">Vehicle detected. Scan QR / Open entry form</p>
-            <p class="vehicle-text">Vehicle: <span id="gateVehicle">--</span></p>
-            <div class="status-dot" id="statusDot"></div>
-            <a class="entry-link" href="/">Open Entry Form</a>
-        </div>
-    </main>
-    <script src="/static/js/gate-display.js"></script>
+  <h1>ParkVision Display</h1>
+  <div class="mode-pill pill-idle" id="modePill">IDLE</div>
+  <div class="message-box" id="gateMessage">Waiting for vehicle...</div>
+
+  <div id="qr-wrapper">
+    <div id="qrcode"></div>
+  </div>
+
+  <div class="pay-remind" id="payRemind">
+    Please complete payment on your device first!
+  </div>
+
+  <!-- Exit gate manual check (operator presses this) -->
+  <div class="exit-form">
+    <input type="text" id="exitVehicle" placeholder="Vehicle no. at exit"/>
+    <button onclick="checkExit()">Check exit</button>
+  </div>
+  <div class="result-msg" id="exitResult"></div>
+
+  <div class="updated">Last update: <span id="lastUpdate">—</span></div>
+
+<script>
+const ENTRY_URL = window.location.origin + '/';
+let qrGenerated = false;
+let currentMode = '';
+
+function setMode(mode, message) {
+  const pill = document.getElementById('modePill');
+  const qrWrap = document.getElementById('qr-wrapper');
+  const payRemind = document.getElementById('payRemind');
+
+  pill.className = 'mode-pill';
+  qrWrap.style.display = 'none';
+  payRemind.style.display = 'none';
+
+  if (mode === 'entry') {
+    pill.classList.add('pill-entry');
+    pill.textContent = 'ENTRY';
+    // Show QR code pointing to the entry form
+    if (!qrGenerated) {
+      new QRCode(document.getElementById('qrcode'), {
+        text: ENTRY_URL,
+        width: 200, height: 200,
+        colorDark: '#000', colorLight: '#fff',
+      });
+      qrGenerated = true;
+    }
+    qrWrap.style.display = 'block';
+  } else if (mode === 'exit') {
+    pill.classList.add('pill-exit');
+    pill.textContent = 'EXIT — GATE OPEN';
+  } else if (mode === 'pay') {
+    pill.classList.add('pill-pay');
+    pill.textContent = 'PAYMENT REQUIRED';
+    payRemind.style.display = 'block';
+  } else {
+    pill.classList.add('pill-idle');
+    pill.textContent = 'IDLE';
+  }
+
+  document.getElementById('gateMessage').textContent = message || '';
+}
+
+async function pollGate() {
+  try {
+    const res = await fetch('/api/gate_state');
+    const g = await res.json();
+    const mode = g.mode || 'idle';
+    if (mode !== currentMode) {
+      currentMode = mode;
+      setMode(mode, g.message);
+    }
+    document.getElementById('lastUpdate').textContent = new Date().toLocaleTimeString();
+  } catch(e) {}
+}
+
+async function checkExit() {
+  const vno = document.getElementById('exitVehicle').value.trim().toUpperCase();
+  const res = document.getElementById('exitResult');
+  if (!vno) { res.textContent = 'Enter a vehicle number'; res.className = 'result-msg err'; return; }
+
+  try {
+    const r = await fetch('/api/exit/check', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({vehicle_no: vno})
+    });
+    const data = await r.json();
+    res.textContent = data.message;
+    res.className = 'result-msg ' + (data.allowed ? 'ok' : 'err');
+    if (data.allowed) {
+      setMode('exit', data.message);
+      setTimeout(() => { currentMode = ''; setMode('idle', 'Waiting for vehicle...'); }, 4000);
+    } else {
+      setMode('pay', data.message);
+    }
+  } catch(e) {
+    res.textContent = 'Error connecting to server';
+    res.className = 'result-msg err';
+  }
+}
+
+pollGate();
+setInterval(pollGate, 3000);
+</script>
 </body>
 </html>

@@ -1384,6 +1384,91 @@ def gate_update():
     )
     return jsonify({"success": True, "mode": mode, "message": message})
 
+# ─── ARDUINO / WOKWI SENSOR INTEGRATION ────────────────────────────────────
+@app.route("/api/sensor/update", methods=["POST"])
+def sensor_update():
+    """Receives slot occupancy data from arduino_simulator.py or wokwi_bridge.py"""
+    if not request.is_json:
+        return jsonify({"message": "Request body must be JSON"}), 400
+
+    payload       = request.json or {}
+    slots_payload = payload.get("slots", {})
+    gate_payload  = payload.get("gate", {})
+    source        = payload.get("source", "unknown")
+
+    if not slots_payload:
+        return jsonify({"message": "No slot data provided"}), 400
+
+    slot_ids = list(slots_payload.keys())
+    active_sessions = sessions_collection.find(
+        {"slot_id": {"$in": slot_ids}, "status": "active"}, {"slot_id": 1}
+    )
+    session_slot_ids = {_norm_slot_id(s["slot_id"]) for s in active_sessions}
+
+    updated, skipped, errors = [], [], []
+
+    for slot_id, sensor in slots_payload.items():
+        norm_id = _norm_slot_id(slot_id)
+        if norm_id in session_slot_ids:   # never override active sessions
+            skipped.append(slot_id)
+            continue
+        new_status = "occupied" if sensor.get("occupied") else "available"
+        try:
+            result = slots_collection.update_one(
+                {"slot_id": norm_id},
+                {"$set": {
+                    "status": new_status,
+                    "last_sensor_update": datetime.now(IST),
+                    "sensor_distance_cm": sensor.get("distance_cm"),
+                    "sensor_source": source,
+                }},
+            )
+            if result.matched_count:
+                updated.append({"slot_id": slot_id, "status": new_status})
+            else:
+                errors.append(f"{slot_id}: not found in DB")
+        except Exception as exc:
+            errors.append(f"{slot_id}: {exc}")
+
+    # Gate state sync when IR triggered
+    if gate_payload.get("ir_triggered"):
+        any_free = gate_payload.get("any_slot_free", True)
+        gate_state_collection.update_one(
+            {"_id": "main_gate"},
+            {"$set": {
+                "mode":       "entry" if any_free else "exit",
+                "message":    "Vehicle detected. Scan QR / Open entry form" if any_free else "Parking Full",
+                "vehicle_no": None,
+                "updated_at": datetime.now(IST),
+            }},
+            upsert=True,
+        )
+
+    return jsonify({"success": True, "source": source, "updated": updated,
+                    "skipped_active_sessions": skipped, "errors": errors})
+
+
+@app.route("/api/sensor/status", methods=["GET"])
+def sensor_status():
+    slot_ids_param = request.args.get("slots", "G1-1,G1-2,G1-3")
+    slot_ids = [s.strip() for s in slot_ids_param.split(",") if s.strip()]
+    slots = list(slots_collection.find(
+        {"slot_id": {"$in": slot_ids}},
+        {"_id": 0, "slot_id": 1, "status": 1, "level": 1,
+         "last_sensor_update": 1, "sensor_distance_cm": 1, "sensor_source": 1}
+    ))
+    for s in slots:
+        if s.get("last_sensor_update"):
+            s["last_sensor_update"] = _iso(s["last_sensor_update"])
+    occupied = sum(1 for s in slots if s.get("status") == "occupied")
+    return jsonify({"slots": slots, "summary": {"total": len(slots),
+                   "occupied": occupied, "free": len(slots) - occupied}})
+
+
+# Add this route for the sensor monitor page
+@app.route("/sensor-monitor")
+def sensor_monitor():
+    return render_template("sensor_monitor.html")
 
 @app.errorhandler(404)
 def not_found(_err):
@@ -1398,6 +1483,86 @@ def internal_error(err):
     if request.path.startswith("/api/"):
         return jsonify({"message": "Internal server error"}), 500
     return "Internal Server Error", 500
+
+# ── SENSOR TRIGGER (called by arduino_simulator.py) ──────────────────────
+@app.route("/api/sensor/trigger", methods=["POST"])
+def sensor_trigger():
+    """
+    Called when Wokwi sensor detects a vehicle (distance < threshold).
+    Sets gate state so the display screen shows the QR code.
+    """
+    data = request.json or {}
+    action = data.get("action", "entry")   # "entry" or "exit"
+    vehicle_no = normalize_vehicle_no(data.get("vehicle_no", ""))
+
+    if action == "entry":
+        msg = "Vehicle detected — please scan QR to enter"
+    else:
+        msg = "Vehicle at exit — please scan QR or pay first"
+
+    gate_state_collection.update_one(
+        {"_id": "main_gate"},
+        {"$set": {
+            "mode": action,
+            "message": msg,
+            "vehicle_no": vehicle_no or None,
+            "updated_at": datetime.now(IST),
+            "sensor_triggered": True,
+        }},
+        upsert=True,
+    )
+    return jsonify({"success": True, "mode": action, "message": msg})
+
+
+# ── EXIT GATE CHECK (checks payment before opening gate) ─────────────────
+@app.route("/api/exit/check", methods=["POST"])
+def exit_check():
+    """
+    Display screen calls this when a vehicle reaches the exit.
+    Returns whether gate should open or show 'please pay' message.
+    """
+    data = request.json or {}
+    vehicle_no = normalize_vehicle_no(data.get("vehicle_no", ""))
+    if not vehicle_no:
+        return jsonify({"allowed": False, "message": "No vehicle number provided"}), 400
+
+    session = sessions_collection.find_one(
+        {"vehicle_no": vehicle_no, "status": "active"},
+    )
+    if not session:
+        # No active session — might already be paid and exited
+        return jsonify({"allowed": True, "message": "No active session found — gate open"})
+
+    payment_status = session.get("payment_status", "unpaid")
+    if payment_status == "paid":
+        # Mark session complete and free the slot
+        sessions_collection.update_one(
+            {"_id": session["_id"]},
+            {"$set": {"status": "completed", "exit_time": datetime.now(IST)}}
+        )
+        slots_collection.update_one(
+            {"slot_id": session.get("slot_id")},
+            {"$set": {"status": "available"}}
+        )
+        gate_state_collection.update_one(
+            {"_id": "main_gate"},
+            {"$set": {"mode": "exit", "message": "Payment verified — gate opening", "updated_at": datetime.now(IST)}},
+            upsert=True,
+        )
+        return jsonify({"allowed": True, "message": "Payment verified — gate opening"})
+    else:
+        gate_state_collection.update_one(
+            {"_id": "main_gate"},
+            {"$set": {"mode": "pay", "message": f"Please pay first — vehicle {vehicle_no}", "updated_at": datetime.now(IST)}},
+            upsert=True,
+        )
+        return jsonify({"allowed": False, "message": f"Payment not done for {vehicle_no} — please pay"})
+
+
+# ── SENSOR MONITOR PAGE ───────────────────────────────────────────────────
+@app.route("/sensor-monitor")
+def sensor_monitor_page():
+    return render_template("sensor_monitor.html")
 
 if __name__ == "__main__":
     app.run(debug=True)
