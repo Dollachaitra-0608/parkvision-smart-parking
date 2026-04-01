@@ -1,146 +1,100 @@
 #include <Arduino.h>
-#include <LiquidCrystal.h>
-#include <Servo.h>
+#include <ESP32Servo.h>
 
-// LCD pins
-LiquidCrystal lcd(12, 11, 5, 4, 3, 2);
+// ── ENTRY GATE ──────────────────────────────────────
+#define ENTRY_TRIG_PIN  5
+#define ENTRY_ECHO_PIN  18
+#define ENTRY_SERVO_PIN 19
+#define ENTRY_BTN_PIN   4
 
-// Ultrasonic sensor pins
-#define t1 10
-#define t2 9
-#define t3 8
+// ── EXIT GATE ───────────────────────────────────────
+#define EXIT_TRIG_PIN   14
+#define EXIT_ECHO_PIN   27
+#define EXIT_SERVO_PIN  26
+#define EXIT_BTN_PIN    13
 
-// IR sensor & servo
-#define IR_SENSOR_PIN 7
-#define SERVO_PIN 6
+// ── LEDs ────────────────────────────────────────────
+#define ENTRY_GREEN_LED 23
+#define ENTRY_RED_LED   22
+#define EXIT_GREEN_LED  21
+#define EXIT_RED_LED    25
 
-// LEDs
-#define GREEN_LED1 A0
-#define GREEN_LED2 A2
-#define GREEN_LED3 A4
+Servo entryServo;
+Servo exitServo;
+bool entryGateOpen = false;
+bool exitGateOpen  = false;
 
-#define RED_LED1 A1
-#define RED_LED2 A3
-#define RED_LED3 A5
-
-Servo servoMotor;
-int distanceThreshold = 150;
+float readDistance(int trigPin, int echoPin) {
+  digitalWrite(trigPin, LOW);
+  delayMicroseconds(2);
+  digitalWrite(trigPin, HIGH);
+  delayMicroseconds(10);
+  digitalWrite(trigPin, LOW);
+  long duration = pulseIn(echoPin, HIGH, 30000);
+  return duration * 0.01723;
+}
 
 void setup() {
-  lcd.begin(16, 2);
-  lcd.setCursor(0, 0);
-
-  pinMode(IR_SENSOR_PIN, INPUT_PULLUP);
-
-  pinMode(GREEN_LED1, OUTPUT);
-  pinMode(GREEN_LED2, OUTPUT);
-  pinMode(GREEN_LED3, OUTPUT);
-
-  pinMode(RED_LED1, OUTPUT);
-  pinMode(RED_LED2, OUTPUT);
-  pinMode(RED_LED3, OUTPUT);
-
-  servoMotor.attach(SERVO_PIN);
-
-  Serial.begin(9600);
-}
-
-// Function to read distance
-long readDistance(int pin) {
-  pinMode(pin, OUTPUT);
-  digitalWrite(pin, LOW);
-  delayMicroseconds(2);
-
-  digitalWrite(pin, HIGH);
-  delayMicroseconds(10);
-  digitalWrite(pin, LOW);
-
-  pinMode(pin, INPUT);
-  return pulseIn(pin, HIGH);
-}
-
-// LED handling
-void handleLEDs(float distance, int greenLedPin, int redLedPin) {
-  if (distance >= distanceThreshold) {
-    digitalWrite(greenLedPin, HIGH);
-    digitalWrite(redLedPin, LOW);
-    Serial.println("Empty slot!!");
-  } else {
-    digitalWrite(redLedPin, HIGH);
-    digitalWrite(greenLedPin, LOW);
-    Serial.println("Car is parked");
-  }
+  Serial.begin(115200);
+  delay(500);
+  pinMode(ENTRY_TRIG_PIN, OUTPUT);
+  pinMode(ENTRY_ECHO_PIN, INPUT);
+  pinMode(EXIT_TRIG_PIN,  OUTPUT);
+  pinMode(EXIT_ECHO_PIN,  INPUT);
+  pinMode(ENTRY_BTN_PIN, INPUT_PULLUP);
+  pinMode(EXIT_BTN_PIN,  INPUT_PULLUP);
+  pinMode(ENTRY_GREEN_LED, OUTPUT);
+  pinMode(ENTRY_RED_LED,   OUTPUT);
+  pinMode(EXIT_GREEN_LED,  OUTPUT);
+  pinMode(EXIT_RED_LED,    OUTPUT);
+  entryServo.attach(ENTRY_SERVO_PIN);
+  exitServo.attach(EXIT_SERVO_PIN);
+  entryServo.write(0);
+  exitServo.write(0);
+  digitalWrite(ENTRY_GREEN_LED, HIGH);
+  digitalWrite(ENTRY_RED_LED,   LOW);
+  digitalWrite(EXIT_GREEN_LED,  HIGH);
+  digitalWrite(EXIT_RED_LED,    LOW);
+  Serial.println("SYSTEM_READY");
 }
 
 void loop() {
+  float entryDist = readDistance(ENTRY_TRIG_PIN, ENTRY_ECHO_PIN);
+  float exitDist  = readDistance(EXIT_TRIG_PIN,  EXIT_ECHO_PIN);
 
-  float d1 = 0.01723 * readDistance(t1);
-  float d2 = 0.01723 * readDistance(t2);
-  float d3 = 0.01723 * readDistance(t3);
+  Serial.print("ENTRY_DIST=");
+  Serial.print(entryDist);
+  Serial.print(" EXIT_DIST=");
+  Serial.println(exitDist);
 
-  Serial.println("d1 = " + String(d1) + " cm");
-  Serial.println("d2 = " + String(d2) + " cm");
-  Serial.println("d3 = " + String(d3) + " cm");
+  bool entryTriggered = (digitalRead(ENTRY_BTN_PIN) == LOW) || (entryDist > 0 && entryDist < 30);
+  bool exitTriggered  = (digitalRead(EXIT_BTN_PIN)  == LOW) || (exitDist  > 0 && exitDist  < 30);
 
-  // IR sensor logic
-  if (digitalRead(IR_SENSOR_PIN) == LOW) {
-    if (d1 > 100 || d2 > 100 || d3 > 100) {
-      servoMotor.write(90);
-      delay(500);
-      servoMotor.write(0);
-      delay(500);
-    }
+  if (entryTriggered && !entryGateOpen) {
+    Serial.println("CAR_AT_ENTRY");
+    digitalWrite(ENTRY_GREEN_LED, LOW);
+    digitalWrite(ENTRY_RED_LED,   HIGH);
+    entryGateOpen = true;
+    entryServo.write(90);
+    delay(4000);
+    entryServo.write(0);
+    entryGateOpen = false;
+    digitalWrite(ENTRY_RED_LED,   LOW);
+    digitalWrite(ENTRY_GREEN_LED, HIGH);
   }
 
-  // LEDs
-  handleLEDs(d1, GREEN_LED1, RED_LED1);
-  handleLEDs(d2, GREEN_LED2, RED_LED2);
-  handleLEDs(d3, GREEN_LED3, RED_LED3);
-
-  // LCD display
-  if (d1 > 100 && d2 > 100 && d3 > 100) {
-    lcd.clear();
-    lcd.setCursor(0, 0);
-    lcd.print("3 Slots Free");
-    lcd.setCursor(0, 1);
-    lcd.print("Slot 1 2 3 Free");
+  if (exitTriggered && !exitGateOpen) {
+    Serial.println("CAR_AT_EXIT");
+    digitalWrite(EXIT_GREEN_LED, LOW);
+    digitalWrite(EXIT_RED_LED,   HIGH);
+    exitGateOpen = true;
+    exitServo.write(90);
+    delay(4000);
+    exitServo.write(0);
+    exitGateOpen = false;
+    digitalWrite(EXIT_RED_LED,   LOW);
+    digitalWrite(EXIT_GREEN_LED, HIGH);
   }
 
-  else if ((d1 > 100 && d2 > 100) || (d2 > 100 && d3 > 100) || (d3 > 100 && d1 > 100)) {
-    lcd.clear();
-    lcd.setCursor(0, 0);
-    lcd.print("2 Slots Free");
-    lcd.setCursor(0, 1);
-
-    if (d1 > 100 && d2 > 100)
-      lcd.print("Slot 1 & 2 Free");
-    else if (d1 > 100 && d3 > 100)
-      lcd.print("Slot 1 & 3 Free");
-    else
-      lcd.print("Slot 2 & 3 Free");
-  }
-
-  else if (d1 < 100 && d2 < 100 && d3 < 100) {
-    lcd.clear();
-    lcd.setCursor(0, 0);
-    lcd.print("No Slot Free");
-    lcd.setCursor(0, 1);
-    lcd.print("Parking Full");
-  }
-
-  else {
-    lcd.clear();
-    lcd.setCursor(0, 0);
-    lcd.print("1 Slot Free");
-    lcd.setCursor(0, 1);
-
-    if (d1 > 100)
-      lcd.print("Slot 1 Free");
-    else if (d2 > 100)
-      lcd.print("Slot 2 Free");
-    else
-      lcd.print("Slot 3 Free");
-  }
-
-  delay(500);
+  delay(200);
 }

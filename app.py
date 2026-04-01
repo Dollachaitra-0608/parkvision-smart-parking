@@ -1470,6 +1470,48 @@ def sensor_status():
 def sensor_monitor():
     return render_template("sensor_monitor.html")
 
+@app.route("/api/pay", methods=["POST"])
+def pay_only():
+    """Marks payment as done but does NOT close session or free slot.
+    Slot is only freed when vehicle physically exits (exit gate check)."""
+    if not request.is_json:
+        return jsonify({"message": "JSON required"}), 400
+    vehicle_no = normalize_vehicle_no((request.json or {}).get("vehicle_no"))
+    if not vehicle_no:
+        return jsonify({"message": "vehicle_no required"}), 400
+
+    session = sessions_collection.find_one(
+        {"vehicle_no": vehicle_no, "status": "active"}
+    )
+    if not session:
+        return jsonify({"message": "No active session found"}), 404
+
+    now = datetime.now(IST)
+    entry = _ensure_ist(session["entry_time"])
+    total_minutes = max(int((now - entry).total_seconds() / 60), 0)
+    blocks = math.ceil(total_minutes / 15) if total_minutes else 0
+    parking_cost = max(blocks * 10, 0)
+    overtime_minutes = max(total_minutes - 120, 0)
+    overtime_cost = math.ceil(overtime_minutes / 15) * 15 if overtime_minutes > 0 else 0
+    total_payment = parking_cost + overtime_cost
+
+    sessions_collection.update_one(
+        {"_id": session["_id"]},
+        {"$set": {
+            "payment_status": "paid",
+            "payment_amount": total_payment,
+            "total_duration_minutes": total_minutes,
+        }}
+    )
+    app.logger.info("PAYMENT DONE vehicle_no=%s amount=%s", vehicle_no, total_payment)
+    return jsonify({
+        "message": "Payment successful! Please proceed to exit gate.",
+        "parking_cost": parking_cost,
+        "overtime_cost": overtime_cost,
+        "total_payment": total_payment,
+        "payment": total_payment,
+    })
+
 @app.errorhandler(404)
 def not_found(_err):
     if request.path.startswith("/api/"):

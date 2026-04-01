@@ -10,3 +10,5 @@ joblib
 itsdangerous
 werkzeug
 bcrypt
+requests
+platformio

@@ -40,7 +40,7 @@ function syncVehicleGlobals() {
 // =============================
 // CONFIG (match admin / Live Server — override with window.API_BASE_URL)
 // =============================
-const BASE_URL = window.API_BASE_URL || "http://127.0.0.1:5000";
+const BASE_URL = window.API_BASE_URL || "";
 
 // =============================
 // DOM ELEMENTS (after DOM ready we re-resolve if needed)
@@ -315,7 +315,7 @@ async function exitParking() {
         return;
     }
 
-    const response = await fetch(`${BASE_URL}/api/exit`, {
+    const response = await fetch(`${BASE_URL}/api/pay`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ vehicle_no: vehicleNo }),
