@@ -336,26 +336,39 @@ def _recommend_slot(vehicle_no, vehicle_type):
                     0.0, min(1.0, 1.0 - (occupied_neighbors / total_neighbors))
                 )
 
+            # Slot number proximity score — lower slot number = closer to entry = better
+            if slot_number is not None:
+                proximity_score = max(0.05, 1.0 - ((slot_number - 1) / 20))
+            else:
+                proximity_score = 0.5
+            
+            # Level priority — G1 before G2 for cars
+            level_num = 0
+            try:
+                level_num = int(level[1:]) if level and level[0].upper() == 'G' else 0
+            except Exception:
+                level_num = 0
+            level_priority = max(0.0, 1.0 - (level_num * 0.2))
             score = (
-                (free_slots_ratio * 0.4)
-                + (low_traffic_bonus * 0.3)
-                + (historical_pref * 0.2)
-                + (local_congestion_score * 0.1)
+                (free_slots_ratio       * 0.20)
+                 + (low_traffic_bonus    * 0.10)
+                 + (historical_pref      * 0.10)
+                 + (local_congestion_score * 0.05)
+                 + (proximity_score      * 0.30)
+                 + (level_priority       * 0.25)
             )
 
             reasons = []
+            if slot_number is not None and slot_number <= 5:
+                reasons.append("Closest to entry point")
+            elif slot_number is not None and slot_number <= 10:
+                reasons.append("Near entry — easy access")
+            else:
+                reasons.append("Available slot")
+            if level_num == 1:
+                reasons.append("Ground level — nearest floor")
             if local_congestion_score >= 0.5:
                 reasons.append("Less crowded area")
-            if slot_number is not None and slot_number > 15:
-                reasons.append("Closer to exit")
-            elif slot_number is not None:
-                reasons.append("Closer to entry")
-            if historical_pref == 1.0:
-                reasons.append("Preferred level based on past usage")
-            if pred == 0:
-                reasons.append("Lower predicted congestion")
-            if not reasons:
-                reasons.append("Best slot score from availability and traffic trends")
 
             candidate_slots.append(
                 {
@@ -595,9 +608,9 @@ def vehicle_entry():
             {"_id": "main_gate"},
             {
                 "$set": {
-                    "mode": "entry",
-                    "message": "Vehicle detected. Scan QR / Open entry form",
-                    "vehicle_no": vehicle_no,
+                    "mode": "idle",
+                    "message": "Waiting for vehicle...",
+                    "vehicle_no": None,
                     "updated_at": now,
                 }
             },
@@ -615,8 +628,21 @@ def vehicle_entry():
             "prediction": recommendation["prediction"],
             "confidence": recommendation["confidence"],
         }
+    # Reset gate to idle after successful entry — prevents duplicate scans
+    try:
+        gate_state_collection.update_one(
+            {"_id": "main_gate"},
+            {"$set": {
+                 "mode": "idle",
+                   "message": "Waiting for vehicle...",
+                   "vehicle_no": None,
+                   "updated_at": datetime.now(IST),
+        }},
+        upsert=True,
+    )
+    except Exception:
+        pass
     return jsonify(resp)
-
 
 # -----------------------------
 # EXIT
@@ -1472,8 +1498,7 @@ def sensor_monitor():
 
 @app.route("/api/pay", methods=["POST"])
 def pay_only():
-    """Marks payment as done but does NOT close session or free slot.
-    Slot is only freed when vehicle physically exits (exit gate check)."""
+    """Marks intent to pay. Final amount calculated at exit gate."""
     if not request.is_json:
         return jsonify({"message": "JSON required"}), 400
     vehicle_no = normalize_vehicle_no((request.json or {}).get("vehicle_no"))
@@ -1490,26 +1515,21 @@ def pay_only():
     entry = _ensure_ist(session["entry_time"])
     total_minutes = max(int((now - entry).total_seconds() / 60), 0)
     blocks = math.ceil(total_minutes / 15) if total_minutes else 0
-    parking_cost = max(blocks * 10, 0)
-    overtime_minutes = max(total_minutes - 120, 0)
-    overtime_cost = math.ceil(overtime_minutes / 15) * 15 if overtime_minutes > 0 else 0
-    total_payment = parking_cost + overtime_cost
+    estimated_cost = max(blocks * 10, 0)
 
+    # Just mark payment initiated — NOT completed yet
     sessions_collection.update_one(
         {"_id": session["_id"]},
-        {"$set": {
-            "payment_status": "paid",
-            "payment_amount": total_payment,
-            "total_duration_minutes": total_minutes,
-        }}
+        {"$set": {"payment_status": "paid"}}
     )
-    app.logger.info("PAYMENT DONE vehicle_no=%s amount=%s", vehicle_no, total_payment)
+
     return jsonify({
-        "message": "Payment successful! Please proceed to exit gate.",
-        "parking_cost": parking_cost,
-        "overtime_cost": overtime_cost,
-        "total_payment": total_payment,
-        "payment": total_payment,
+        "message": "Payment recorded! Please proceed to exit gate.",
+        "parking_cost": estimated_cost,
+        "overtime_cost": 0,
+        "total_payment": estimated_cost,
+        "payment": estimated_cost,
+        "note": "Final amount will be confirmed at exit gate"
     })
 
 @app.errorhandler(404)
