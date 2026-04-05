@@ -402,3 +402,50 @@ body {
         padding: 10px;
     }
 }
+
+.pagination {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 24px 0 16px;
+    flex-wrap: wrap;
+}
+
+.page-btn {
+    min-width: 38px;
+    height: 38px;
+    padding: 0 12px;
+    border-radius: 8px;
+    border: 1px solid #c8b89a;
+    background: #fff;
+    color: #5a3e2b;
+    font-size: 0.88rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.2s, color 0.2s;
+}
+
+.page-btn:hover:not(:disabled) {
+    background: #e8d5b0;
+    border-color: #a07850;
+}
+
+.page-btn.active {
+    background: #c8a165;
+    color: #fff;
+    border-color: #a07850;
+    font-weight: 700;
+}
+
+.page-btn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+.page-info {
+    color: #888;
+    font-size: 0.85rem;
+    text-align: center;
+    padding-bottom: 8px;
+}

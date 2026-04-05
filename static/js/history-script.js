@@ -30,7 +30,7 @@ let filterState = {
     date: ''
 };
 let currentPage = 1;
-const PAGE_SIZE = 50;
+const PAGE_SIZE = 25;
 
 const vehicleTypeSearch = document.getElementById('vehicleTypeSearch');
 const levelFilter = document.getElementById('levelFilter');
@@ -174,8 +174,19 @@ function renderTable(data) {
 function renderPagination(totalPages) {
     if (!paginationContainer) return;
     paginationContainer.innerHTML = '';
-
     if (totalPages <= 1) return;
+
+    const filtered = getFilteredHistoryRows();
+    const total = filtered.length;
+    const start = (currentPage - 1) * PAGE_SIZE + 1;
+    const end = Math.min(currentPage * PAGE_SIZE, total);
+
+    // Info line
+    const info = document.createElement('div');
+    info.className = 'page-info';
+    info.style.width = '100%';
+    info.textContent = `Showing ${start}–${end} of ${total} records`;
+    paginationContainer.appendChild(info);
 
     const makeButton = (label, page, disabled = false, active = false) => {
         const btn = document.createElement('button');
@@ -185,22 +196,48 @@ function renderPagination(totalPages) {
         btn.addEventListener('click', () => {
             currentPage = page;
             applyFilters();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
         });
         return btn;
     };
 
+    // Prev arrow
     paginationContainer.appendChild(
-        makeButton('Prev', Math.max(1, currentPage - 1), currentPage === 1)
+        makeButton('← Prev', currentPage - 1, currentPage === 1)
     );
 
-    for (let p = 1; p <= totalPages; p++) {
-        paginationContainer.appendChild(
-            makeButton(String(p), p, false, p === currentPage)
-        );
+    // Page number buttons — show max 5 around current page
+    const delta = 2;
+    const rangeStart = Math.max(1, currentPage - delta);
+    const rangeEnd = Math.min(totalPages, currentPage + delta);
+
+    if (rangeStart > 1) {
+        paginationContainer.appendChild(makeButton('1', 1));
+        if (rangeStart > 2) {
+            const dots = document.createElement('span');
+            dots.textContent = '...';
+            dots.style.cssText = 'padding:0 4px;color:var(--color-text-secondary,#888);';
+            paginationContainer.appendChild(dots);
+        }
     }
 
+    for (let p = rangeStart; p <= rangeEnd; p++) {
+        paginationContainer.appendChild(makeButton(String(p), p, false, p === currentPage));
+    }
+
+    if (rangeEnd < totalPages) {
+        if (rangeEnd < totalPages - 1) {
+            const dots = document.createElement('span');
+            dots.textContent = '...';
+            dots.style.cssText = 'padding:0 4px;color:var(--color-text-secondary,#888);';
+            paginationContainer.appendChild(dots);
+        }
+        paginationContainer.appendChild(makeButton(String(totalPages), totalPages));
+    }
+
+    // Next arrow
     paginationContainer.appendChild(
-        makeButton('Next', Math.min(totalPages, currentPage + 1), currentPage === totalPages)
+        makeButton('Next →', currentPage + 1, currentPage === totalPages)
     );
 }
 

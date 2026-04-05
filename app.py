@@ -611,7 +611,7 @@ def vehicle_entry():
                     "mode": "idle",
                     "message": "Waiting for vehicle...",
                     "vehicle_no": None,
-                    "updated_at": now,
+                    "updated_at": datetime.now(IST),
                 }
             },
             upsert=True,
@@ -1505,9 +1505,14 @@ def pay_only():
     if not vehicle_no:
         return jsonify({"message": "vehicle_no required"}), 400
 
-    session = sessions_collection.find_one(
-        {"vehicle_no": vehicle_no, "status": "active"}
-    )
+    session = sessions_collection.update_one(
+    {"_id": session["_id"]},
+    {"$set": {
+        "payment_status": "paid",
+        "payment_amount": total_payment,
+        "total_duration_minutes": total_minutes,
+    }}
+)
     if not session:
         return jsonify({"message": "No active session found"}), 404
 
