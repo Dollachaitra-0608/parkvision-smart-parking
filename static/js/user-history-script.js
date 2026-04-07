@@ -1,5 +1,5 @@
-const BASE_URL = "http://127.0.0.1:5000";
-const vehicleNo = "TS09UD0036";  // same as in user.js
+const BASE_URL = "";
+const vehicleNo = (localStorage.getItem("vehicle_no") || "").trim().toUpperCase();
 
 let parkingHistory = [];
 
@@ -19,7 +19,12 @@ async function loadHistoryData() {
 
     try {
 
-        const response = await fetch(`${BASE_URL}/api/history/${vehicleNo}`);
+        if (!vehicleNo) {
+            emptyState.style.display = "block";
+            tableBody.innerHTML = "";
+            return;
+        }
+        const response = await fetch(`${BASE_URL}/api/history/${encodeURIComponent(vehicleNo)}`);
         const data = await response.json();
 
         parkingHistory = data;

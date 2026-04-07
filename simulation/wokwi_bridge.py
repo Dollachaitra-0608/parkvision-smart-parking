@@ -3,9 +3,12 @@ ParkVision Wokwi Bridge
 Reads Wokwi Serial Monitor output and calls Flask API automatically.
 Run: python simulation/wokwi_bridge.py
 """
+import os
+import socket
 import sys, requests, time, threading, msvcrt
 
-FLASK_URL = "http://127.0.0.1:5000"
+DEFAULT_HOST = socket.gethostbyname(socket.gethostname())
+FLASK_URL = os.environ.get("PARKVISION_BACKEND_URL", f"http://{DEFAULT_HOST}:5000")
 last_entry = 0
 last_exit  = 0
 COOLDOWN   = 6

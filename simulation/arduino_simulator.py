@@ -5,10 +5,13 @@ Usage:
   python simulation/arduino_simulator.py exit
   python simulation/arduino_simulator.py exit --vehicle TS09AB1234
 """
+import os
+import socket
 import sys
 import requests
 
-FLASK_URL = "http://127.0.0.1:5000"
+DEFAULT_HOST = socket.gethostbyname(socket.gethostname())
+FLASK_URL = os.environ.get("PARKVISION_BACKEND_URL", f"http://{DEFAULT_HOST}:5000")
 
 def trigger(action, vehicle_no=""):
     resp = requests.post(f"{FLASK_URL}/api/sensor/trigger", json={

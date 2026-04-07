@@ -36,10 +36,7 @@ function adminApiFetch(path, options) {
     if (typeof adminFetch === "function") {
         return adminFetch(path, options);
     }
-    const base =
-        window.ADMIN_BASE_URL ||
-        window.API_BASE_URL ||
-        "http://127.0.0.1:5000";
+    const base = "";
     const token = localStorage.getItem("adminToken");
     const opts = Object.assign({}, options);
     const headers = Object.assign({}, opts.headers || {});

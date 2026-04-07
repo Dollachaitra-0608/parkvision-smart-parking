@@ -30,12 +30,7 @@ app.config["SECRET_KEY"] = os.environ.get(
     "SECRET_KEY", "dev-smart-parking-secret-change-me"
 )
 
-CORS(
-    app,
-    resources={
-        r"/api/*": {"origins": "*", "allow_headers": ["Content-Type", "Authorization"]}
-    },
-)
+CORS(app)
 
 gate_state_collection = db["gate_state"]
 IST = pytz.timezone("Asia/Kolkata")
@@ -71,6 +66,7 @@ def admin_history():
     return render_template("admin/history.html")
 
 @app.route("/admin/statistics")
+@app.route("/admin/stats")
 def admin_statistics():
     return render_template("admin/statistics.html")
 
@@ -753,6 +749,7 @@ def extend_parking():
 # STATUS (per vehicle_no — multi-user)
 # -----------------------------
 @app.route("/api/status/<vehicle_no>", methods=["GET"])
+@app.route("/api/user/status/<vehicle_no>", methods=["GET"])
 def get_status(vehicle_no):
     vehicle_no = normalize_vehicle_no(vehicle_no)
     session = sessions_collection.find_one(
@@ -787,6 +784,7 @@ def get_status(vehicle_no):
 # USER HISTORY (optional)
 # -----------------------------
 @app.route("/api/history/<vehicle_no>", methods=["GET"])
+@app.route("/api/user/history/<vehicle_no>", methods=["GET"])
 def get_history(vehicle_no):
     vehicle_no = normalize_vehicle_no(vehicle_no)
     sessions = list(
@@ -1012,6 +1010,7 @@ def active_sessions():
 # ADMIN STATISTICS
 # -----------------------------
 @app.route("/api/admin/statistics", methods=["GET"])
+@app.route("/api/admin/stats", methods=["GET"])
 @require_admin
 def admin_statistics_api():
     start_str = request.args.get("start_date") or request.args.get("start")
@@ -1654,4 +1653,4 @@ def sensor_monitor_page():
     return render_template("sensor_monitor.html")
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run(host="0.0.0.0", port=5000, debug=True)

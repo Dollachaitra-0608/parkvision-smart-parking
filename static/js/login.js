@@ -1,5 +1,4 @@
-const BASE_URL =
-    window.API_BASE_URL || window.ADMIN_BASE_URL || "http://127.0.0.1:5000";
+const BASE_URL = "";
 const TOKEN_KEY = "adminToken";
 
 document.getElementById("loginForm").addEventListener("submit", async function (e) {
@@ -27,7 +26,7 @@ document.getElementById("loginForm").addEventListener("submit", async function (
 
     try {
         console.log("[login] POST /api/login");
-        const response = await fetch(`${BASE_URL}/api/login`, {
+        const response = await fetch("/api/login", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ username, password }),

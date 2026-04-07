@@ -2,13 +2,12 @@
  * Admin auth: signed token in localStorage + adminFetch (Bearer).
  * Load BEFORE other admin scripts. Skips guard on login.html.
  *
- * Override API host: <script>window.API_BASE_URL="http://127.0.0.1:5000";</script> before this file.
+ * Uses same-origin relative paths for multi-device access.
  */
 (function () {
-    const BASE_URL = window.API_BASE_URL || "http://127.0.0.1:5000";
+    const BASE_URL = "";
     const TOKEN_KEY = "adminToken";
 
-    window.ADMIN_BASE_URL = BASE_URL;
     window.ADMIN_TOKEN_KEY = TOKEN_KEY;
 
     const path = (window.location.pathname || "").toLowerCase();

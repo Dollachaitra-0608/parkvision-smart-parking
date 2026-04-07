@@ -184,18 +184,19 @@ async function allocateSlot() {
 
     console.log("[allocateSlot] POST /api/entry", { vehicle_no: vehicleNo, vehicle_type: vehicleType });
 
-    const response = await fetch(`${BASE_URL}/api/entry`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-            vehicle_no: vehicleNo,
-            vehicle_type: vehicleType,
-        }),
-    });
+    try {
+        const response = await fetch(`${BASE_URL}/api/entry`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                vehicle_no: vehicleNo,
+                vehicle_type: vehicleType,
+            }),
+        });
 
-    const data = await response.json().catch(() => ({}));
+        const data = await response.json().catch(() => ({}));
 
-    if (response.ok) {
+        if (response.ok) {
         console.log("[allocateSlot] recommendation", data.recommendation || null);
         if (slotValueEl) slotValueEl.textContent = data.slot_id || "--";
         if (levelValueEl) levelValueEl.textContent = data.level || "--";
@@ -215,9 +216,13 @@ async function allocateSlot() {
 
         startTimer();
         console.log("[allocateSlot] success", data);
-    } else {
-        console.warn("[allocateSlot] failed", response.status, data);
-        alert(data.message || "Could not allocate slot");
+        } else {
+            console.warn("[allocateSlot] failed", response.status, data);
+            alert(data.message || "Could not allocate slot");
+        }
+    } catch (err) {
+        console.error("API Error:", err);
+        alert("Could not allocate slot");
     }
 }
 
@@ -230,12 +235,18 @@ async function updateLiveStatus() {
         return;
     }
 
-    const response = await fetch(`${BASE_URL}/api/status/${encodeURIComponent(vehicleNo)}`);
+    let response;
     let data = {};
     try {
-        data = await response.json();
-    } catch (_) {
-        data = {};
+        response = await fetch(`${BASE_URL}/api/status/${encodeURIComponent(vehicleNo)}`);
+        try {
+            data = await response.json();
+        } catch (_) {
+            data = {};
+        }
+    } catch (err) {
+        console.error("API Error:", err);
+        return;
     }
 
     if (!response.ok || !data.active) {
@@ -315,15 +326,16 @@ async function exitParking() {
         return;
     }
 
-    const response = await fetch(`${BASE_URL}/api/pay`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ vehicle_no: vehicleNo }),
-    });
+    try {
+        const response = await fetch(`${BASE_URL}/api/pay`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ vehicle_no: vehicleNo }),
+        });
 
-    const data = await response.json().catch(() => ({}));
+        const data = await response.json().catch(() => ({}));
 
-    if (response.ok) {
+        if (response.ok) {
         clearInterval(timerInterval);
         timerInterval = null;
         timeRemaining = 0;
@@ -352,8 +364,12 @@ async function exitParking() {
             localStorage.removeItem(VEHICLE_TYPE_KEY);
         } catch (_) {}
         console.log("[exitParking] session cleared");
-    } else {
-        alert(data.message || "Exit failed");
+        } else {
+            alert(data.message || "Exit failed");
+        }
+    } catch (err) {
+        console.error("API Error:", err);
+        alert("Exit failed");
     }
 }
 
@@ -366,21 +382,26 @@ async function extendParking(minutes) {
         return;
     }
 
-    const response = await fetch(`${BASE_URL}/api/extend`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-            vehicle_no: vehicleNo,
-            minutes: minutes,
-        }),
-    });
+    try {
+        const response = await fetch(`${BASE_URL}/api/extend`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                vehicle_no: vehicleNo,
+                minutes: minutes,
+            }),
+        });
 
-    if (response.ok) {
-        showNotification("Extended by " + minutes + " minutes");
-        await updateLiveStatus();
-    } else {
-        const err = await response.json().catch(() => ({}));
-        alert(err.message || "Extend failed");
+        if (response.ok) {
+            showNotification("Extended by " + minutes + " minutes");
+            await updateLiveStatus();
+        } else {
+            const err = await response.json().catch(() => ({}));
+            alert(err.message || "Extend failed");
+        }
+    } catch (err) {
+        console.error("API Error:", err);
+        alert("Extend failed");
     }
 }
 
