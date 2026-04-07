@@ -1519,32 +1519,31 @@ def sensor_monitor():
 
 @app.route("/api/pay", methods=["POST"])
 def pay_only():
-    if not request.is_json:
-        return jsonify({"message": "JSON required"}), 400
-
-    vehicle_no = normalize_vehicle_no((request.json or {}).get("vehicle_no"))
+    data = request.json or {}
+    vehicle_no = normalize_vehicle_no(data.get("vehicle_no"))
 
     if not vehicle_no:
         return jsonify({"message": "vehicle_no required"}), 400
 
-    # STEP 1: GET SESSION (IMPORTANT)
+    # ✅ FIND ACTIVE SESSION
     session = sessions_collection.find_one({
         "vehicle_no": vehicle_no,
-        "status": "active"},{"$set": {"payment_status": "paid"}}
-    )
+        "status": "active"
+    })
 
     if not session:
         return jsonify({"message": "No active session found"}), 404
 
-    #STEP 2: CALCULATE PAYMENT
+    # ✅ CALCULATE COST
     now = datetime.now(IST)
     entry = _ensure_ist(session["entry_time"])
     total_minutes = max(int((now - entry).total_seconds() / 60), 0)
+
     blocks = math.ceil(total_minutes / 15) if total_minutes else 0
     estimated_cost = max(blocks * 10, 0)
 
-    #STEP 3: UPDATE DATABASE (MOST IMPORTANT)
-    sessions_collection.update_one(
+    # ✅ UPDATE PAYMENT STATUS (THIS IS THE MAIN FIX)
+    result = sessions_collection.update_one(
         {"_id": session["_id"]},
         {"$set": {
             "payment_status": "paid",
@@ -1553,8 +1552,10 @@ def pay_only():
         }}
     )
 
+    print("PAY UPDATE RESULT:", result.modified_count)  # DEBUG
+
     return jsonify({
-        "message": "Payment recorded! Proceed to exit gate.",
+        "message": "Payment successful",
         "total_payment": estimated_cost
     })
 
