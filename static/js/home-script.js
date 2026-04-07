@@ -192,10 +192,31 @@ window.addEventListener("admin-auth-ready", () => {
 });
 
 document.addEventListener("DOMContentLoaded", () => {
-    console.log("Fallback → loading dashboard");
-    setTimeout(() => {
-        if (!window.dashboardStarted) {
-            initAdminDashboard();
+    console.log("Page loaded — forcing init");
+
+    // FORCE dashboard init
+    if (typeof initAdminDashboard === "function") {
+        initAdminDashboard();
+    }
+
+    //  FORCE history load
+    if (typeof loadHistory === "function") {
+        loadHistory(1);
+    }
+
+    //  DROPDOWN
+    const userBtn = document.querySelector('.user-btn');
+const userDropdown = document.querySelector('.user-dropdown');
+
+if (userBtn && userDropdown) {
+    userBtn.addEventListener('click', () => {
+        userDropdown.classList.toggle('active');
+    });
+
+    document.addEventListener('click', (e) => {
+        if (!userDropdown.contains(e.target) && !userBtn.contains(e.target)) {
+            userDropdown.classList.remove('active');
         }
-    }, 500);
+    });
+}
 });

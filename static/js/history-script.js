@@ -11,13 +11,26 @@ const downloadCsvBtn = document.getElementById("downloadCsvBtn");
 const historyTableBody = document.getElementById("historyTableBody");
 const paginationContainer = document.getElementById("paginationContainer");
 
+function getVehicleType(slot) {
+    if (slot.startsWith("G0")) return "bike";
+    if (slot.startsWith("G1") || slot.startsWith("G2")) return "car";
+    if (slot.startsWith("G3")) return "heavy";
+    return "";
+}
+
 function applyLocalFilters(rows) {
-    const q = (vehicleSearch?.value || "").trim().toLowerCase();
-    const d = (dateFilter?.value || "").trim();
-    return rows.filter((r) => {
-        const matchesVehicle = !q || String(r.vehicleNo || "").toLowerCase().includes(q);
-        const matchesDate = !d || String(r.date || "") === d;
-        return matchesVehicle && matchesDate;
+    const typeSearch = document.getElementById("vehicleTypeSearch").value.toLowerCase();
+    const level = document.getElementById("levelFilter").value;
+    const date = document.getElementById("dateFilter").value;
+
+    return rows.filter(row => {
+        const vehicleType = getVehicleType(row.slot);
+
+        return (
+            (!typeSearch || vehicleType.includes(typeSearch)) &&
+            (!level || row.slot.startsWith(level)) &&
+            (!date || row.date === date)
+        );
     });
 }
 
@@ -146,18 +159,95 @@ function downloadPDF() {
 }
 
 document.addEventListener("DOMContentLoaded", () => {
-    vehicleSearch?.addEventListener("input", () => renderTable(applyLocalFilters(pageRows)));
-    dateFilter?.addEventListener("change", () => renderTable(applyLocalFilters(pageRows)));
-    clearFilterBtn?.addEventListener("click", clearFilters);
-    downloadCsvBtn?.addEventListener("click", downloadCSV);
-    downloadPdfBtn?.addEventListener("click", downloadPDF);
 
-    if (localStorage.getItem("adminToken")) {
-        loadHistory(1).catch((err) => {
-            console.error("API Error:", err);
-            historyTableBody.innerHTML = '<tr><td colspan="7" class="empty-state">Error loading data from backend.</td></tr>';
+    console.log("Page loaded - forcing init");
+
+    if (typeof initAdminDashboard === "function") {
+        initAdminDashboard();
+    }
+
+    if (typeof loadHistory === "function") {
+        loadHistory(1);
+    }
+
+    // ================= FILTERS START =================
+
+    const typeFilter = document.getElementById("vehicleTypeSearch");
+    const levelFilter = document.getElementById("levelFilter");
+    const dateFilter = document.getElementById("dateFilter");
+    const clearBtn = document.getElementById("clearFilterBtn");
+
+    function applyAllFilters() {
+        const type = typeFilter.value.toLowerCase();
+        const level = levelFilter.value;
+        const date = dateFilter.value;
+
+        const filtered = pageRows.filter(row => {
+            const slot = row.slot || "";
+
+            let vehicleType = "";
+            if (slot.startsWith("G0")) vehicleType = "bike";
+            else if (slot.startsWith("G1") || slot.startsWith("G2")) vehicleType = "car";
+            else if (slot.startsWith("G3")) vehicleType = "heavy";
+
+            return (
+                (!type || vehicleType === type) &&
+                (!level || slot.startsWith(level)) &&
+                (!date || (row.entry_time && row.entry_time.startsWith(date)))
+            );
+        });
+
+        renderTable(filtered);
+    }
+
+    if (typeFilter) typeFilter.addEventListener("change", applyAllFilters);
+    if (levelFilter) levelFilter.addEventListener("change", applyAllFilters);
+    if (dateFilter) dateFilter.addEventListener("change", applyAllFilters);
+
+    if (clearBtn) {
+        clearBtn.addEventListener("click", () => {
+            typeFilter.value = "";
+            levelFilter.value = "";
+            dateFilter.value = "";
+            renderTable(pageRows);
         });
     }
+
+    // ================= FILTERS END =================
+
+    // DROPDOWN (your existing code continues...)
+    const userBtn = document.querySelector('.user-btn');
+    const userDropdown = document.querySelector('.user-dropdown');
+
+    if (userBtn && userDropdown) {
+        userBtn.addEventListener('click', () => {
+            userDropdown.classList.toggle('active');
+        });
+
+        document.addEventListener('click', (e) => {
+            if (!userDropdown.contains(e.target) && !userBtn.contains(e.target)) {
+                userDropdown.classList.remove('active');
+            }
+        });
+    }
+    // ================= DOWNLOAD BUTTONS =================
+
+const downloadCsvBtn = document.getElementById("downloadCsvBtn");
+const downloadPdfBtn = document.getElementById("downloadPdfBtn");
+
+if (downloadCsvBtn) {
+    downloadCsvBtn.addEventListener("click", () => {
+        console.log("CSV clicked");
+        downloadCSV();
+    });
+}
+
+if (downloadPdfBtn) {
+    downloadPdfBtn.addEventListener("click", () => {
+        console.log("PDF clicked");
+        downloadPDF();
+    });
+}
 });
 
 window.addEventListener("admin-auth-ready", () => {

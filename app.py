@@ -638,7 +638,7 @@ def exit_vehicle():
         return jsonify({"message": "vehicle_no required"}), 400
 
     session = sessions_collection.find_one(
-        {"vehicle_no": vehicle_no, "status": "active"}
+        {"vehicle_no": vehicle_no, "status": "active"}, sort=[("entry_time", -1)]
     )
     if not session:
         return jsonify({"message": "No active session"}), 404
@@ -1519,43 +1519,43 @@ def sensor_monitor():
 
 @app.route("/api/pay", methods=["POST"])
 def pay_only():
-    """Marks intent to pay. Final amount calculated at exit gate."""
     if not request.is_json:
         return jsonify({"message": "JSON required"}), 400
+
     vehicle_no = normalize_vehicle_no((request.json or {}).get("vehicle_no"))
+
     if not vehicle_no:
         return jsonify({"message": "vehicle_no required"}), 400
 
-    session = sessions_collection.update_one(
-    {"_id": session["_id"]},
-    {"$set": {
-        "payment_status": "paid",
-        "payment_amount": total_payment,
-        "total_duration_minutes": total_minutes,
-    }}
-)
+    # STEP 1: GET SESSION (IMPORTANT)
+    session = sessions_collection.find_one({
+        "vehicle_no": vehicle_no,
+        "status": "active"},{"$set": {"payment_status": "paid"}}
+    )
+
     if not session:
         return jsonify({"message": "No active session found"}), 404
 
+    #STEP 2: CALCULATE PAYMENT
     now = datetime.now(IST)
     entry = _ensure_ist(session["entry_time"])
     total_minutes = max(int((now - entry).total_seconds() / 60), 0)
     blocks = math.ceil(total_minutes / 15) if total_minutes else 0
     estimated_cost = max(blocks * 10, 0)
 
-    # Just mark payment initiated — NOT completed yet
+    #STEP 3: UPDATE DATABASE (MOST IMPORTANT)
     sessions_collection.update_one(
         {"_id": session["_id"]},
-        {"$set": {"payment_status": "paid"}}
+        {"$set": {
+            "payment_status": "paid",
+            "payment_amount": estimated_cost,
+            "total_duration_minutes": total_minutes
+        }}
     )
 
     return jsonify({
-        "message": "Payment recorded! Please proceed to exit gate.",
-        "parking_cost": estimated_cost,
-        "overtime_cost": 0,
-        "total_payment": estimated_cost,
-        "payment": estimated_cost,
-        "note": "Final amount will be confirmed at exit gate"
+        "message": "Payment recorded! Proceed to exit gate.",
+        "total_payment": estimated_cost
     })
 
 @app.errorhandler(404)
