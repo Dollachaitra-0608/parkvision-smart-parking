@@ -325,9 +325,10 @@ async function exitParking() {
         alert("No active vehicle session.");
         return;
     }
+    vehicleNo = vehicleNo.trim().toUpperCase();
 
     try {
-        const response = await fetch("/api/exit/check", {
+        const response = await fetch("/api/pay", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ vehicle_no: vehicleNo }),

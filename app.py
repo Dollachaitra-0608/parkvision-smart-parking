@@ -1520,21 +1520,20 @@ def sensor_monitor():
 @app.route("/api/pay", methods=["POST"])
 def pay_only():
     data = request.json or {}
-    vehicle_no = normalize_vehicle_no(data.get("vehicle_no"))
+    vehicle_no = str(data.get("vehicle_no", "")).strip().upper()
+    print(f"[PAY] vehicle_no received: {vehicle_no}")
 
     if not vehicle_no:
         return jsonify({"message": "vehicle_no required"}), 400
 
-    # ✅ FIND ACTIVE SESSION
-    session = sessions_collection.find_one({
-        "vehicle_no": vehicle_no,
-        "status": "active"
-    })
+    session = sessions_collection.find_one(
+        {"vehicle_no": vehicle_no, "status": "active"}
+    )
+    print(f"[PAY] session found: {bool(session)}")
 
     if not session:
         return jsonify({"message": "No active session found"}), 404
 
-    # ✅ CALCULATE COST
     now = datetime.now(IST)
     entry = _ensure_ist(session["entry_time"])
     total_minutes = max(int((now - entry).total_seconds() / 60), 0)
@@ -1542,17 +1541,17 @@ def pay_only():
     blocks = math.ceil(total_minutes / 15) if total_minutes else 0
     estimated_cost = max(blocks * 10, 0)
 
-    # ✅ UPDATE PAYMENT STATUS (THIS IS THE MAIN FIX)
     result = sessions_collection.update_one(
         {"_id": session["_id"]},
-        {"$set": {
-            "payment_status": "paid",
-            "payment_amount": estimated_cost,
-            "total_duration_minutes": total_minutes
-        }}
+        {
+            "$set": {
+                "payment_status": "paid",
+                "payment_amount": estimated_cost,
+                "total_duration_minutes": total_minutes,
+            }
+        },
     )
-
-    print("PAY UPDATE RESULT:", result.modified_count)  # DEBUG
+    print(f"[PAY] update modified_count: {result.modified_count}")
 
     return jsonify({
         "message": "Payment successful",
@@ -1622,7 +1621,7 @@ def exit_check():
         # No active session — might already be paid and exited
         return jsonify({"allowed": True, "message": "No active session found — gate open"})
 
-    payment_status = session.get("payment_status", "unpaid")
+    payment_status = str(session.get("payment_status", "pending")).strip().lower()
     if payment_status == "paid":
         # Mark session complete and free the slot
         sessions_collection.update_one(
