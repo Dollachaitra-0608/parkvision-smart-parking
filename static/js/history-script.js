@@ -30,8 +30,12 @@ let filterState = {
     date: ''
 };
 let currentPage = 1;
+<<<<<<< HEAD
 let totalPages = 1;
 const PAGE_SIZE = 20;
+=======
+const PAGE_SIZE = 25;
+>>>>>>> e93bac245633b21ba562ae61a1af75b3054bc45e
 
 const vehicleTypeSearch = document.getElementById('vehicleTypeSearch');
 const levelFilter = document.getElementById('levelFilter');
@@ -42,15 +46,23 @@ const downloadCsvBtn = document.getElementById('downloadCsvBtn');
 const historyTableBody = document.getElementById('historyTableBody');
 const paginationContainer = document.getElementById('paginationContainer');
 
+<<<<<<< HEAD
 async function loadHistory(page = 1) {
     try {
         const response = await adminFetch(`/api/admin/history?page=${page}&limit=${PAGE_SIZE}`, { method: "GET" });
+=======
+async function loadHistory() {
+    console.log("History data:", allHistoryRows);
+    try {
+        const response = await adminFetch("/api/admin/history", { method: "GET" });
+>>>>>>> e93bac245633b21ba562ae61a1af75b3054bc45e
         if (!response.ok) {
             const snippet = await response.text().catch(() => "");
             console.error("[admin-history] HTTP", response.status, snippet.slice(0, 300));
             throw new Error("history " + response.status);
         }
         const data = await response.json();
+<<<<<<< HEAD
         const rows = Array.isArray(data?.data) ? data.data : [];
         currentPage = Number(data?.page || page || 1);
         totalPages = Math.max(1, Number(data?.total_pages || 1));
@@ -68,6 +80,21 @@ async function loadHistory(page = 1) {
 
         renderTable(allHistoryRows);
         renderPagination();
+=======
+        console.log("[admin-history] rows:", Array.isArray(data) ? data.length : data);
+
+        allHistoryRows = (data || []).map(row => ({
+            date: row.date,
+            vehicleNo: row.vehicle_no,
+            vehicleType: row.vehicle_type,
+            level: row.level || '',
+            slot: row.slot_id,
+            entryTime: row.entry_time,
+            exitTime: row.exit_time,
+            payment: row.payment
+        }));
+        applyFilters();
+>>>>>>> e93bac245633b21ba562ae61a1af75b3054bc45e
     } catch (error) {
         console.error("Error loading history data", error);
         historyTableBody.innerHTML = `
@@ -154,7 +181,11 @@ function renderTable(data) {
     if (!data.length) {
         historyTableBody.innerHTML = `
             <tr>
+<<<<<<< HEAD
                 <td colspan="7" class="empty-state">No records found.</td>
+=======
+                <td colspan="7" class="empty-state">No records found matching your filters.</td>
+>>>>>>> e93bac245633b21ba562ae61a1af75b3054bc45e
             </tr>
         `;
         return;
@@ -163,6 +194,7 @@ function renderTable(data) {
     data.forEach(row => {
         const tr = document.createElement('tr');
         tr.innerHTML = `
+<<<<<<< HEAD
             <td>${row.vehicleNo || ''}</td>
             <td>${row.slot || ''}</td>
             <td>${row.entryTime || ''}</td>
@@ -170,11 +202,21 @@ function renderTable(data) {
             <td>${row.durationMinutes || 0} min</td>
             <td>${row.payment != null ? row.payment : 0}</td>
             <td>${String(row.paymentStatus || 'pending').toUpperCase()}</td>
+=======
+            <td>${row.date || ''}</td>
+            <td>${row.vehicleNo || ''}</td>
+            <td>${row.vehicleType || ''}</td>
+            <td>${row.slot || ''}</td>
+            <td>${row.entryTime || ''}</td>
+            <td>${row.exitTime || ''}</td>
+            <td>${row.payment != null ? row.payment : ''}</td>
+>>>>>>> e93bac245633b21ba562ae61a1af75b3054bc45e
         `;
         historyTableBody.appendChild(tr);
     });
 }
 
+<<<<<<< HEAD
 function renderPagination() {
     if (!paginationContainer) return;
     paginationContainer.innerHTML = '';
@@ -201,6 +243,76 @@ function renderPagination() {
     paginationContainer.appendChild(prevBtn);
     paginationContainer.appendChild(info);
     paginationContainer.appendChild(nextBtn);
+=======
+function renderPagination(totalPages) {
+    if (!paginationContainer) return;
+    paginationContainer.innerHTML = '';
+    if (totalPages <= 1) return;
+
+    const filtered = getFilteredHistoryRows();
+    const total = filtered.length;
+    const start = (currentPage - 1) * PAGE_SIZE + 1;
+    const end = Math.min(currentPage * PAGE_SIZE, total);
+
+    // Info line
+    const info = document.createElement('div');
+    info.className = 'page-info';
+    info.style.width = '100%';
+    info.textContent = `Showing ${start}–${end} of ${total} records`;
+    paginationContainer.appendChild(info);
+
+    const makeButton = (label, page, disabled = false, active = false) => {
+        const btn = document.createElement('button');
+        btn.textContent = label;
+        btn.className = 'page-btn' + (active ? ' active' : '');
+        btn.disabled = disabled;
+        btn.addEventListener('click', () => {
+            currentPage = page;
+            applyFilters();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        });
+        return btn;
+    };
+
+    // Prev arrow
+    paginationContainer.appendChild(
+        makeButton('← Prev', currentPage - 1, currentPage === 1)
+    );
+
+    // Page number buttons — show max 5 around current page
+    const delta = 2;
+    const rangeStart = Math.max(1, currentPage - delta);
+    const rangeEnd = Math.min(totalPages, currentPage + delta);
+
+    if (rangeStart > 1) {
+        paginationContainer.appendChild(makeButton('1', 1));
+        if (rangeStart > 2) {
+            const dots = document.createElement('span');
+            dots.textContent = '...';
+            dots.style.cssText = 'padding:0 4px;color:var(--color-text-secondary,#888);';
+            paginationContainer.appendChild(dots);
+        }
+    }
+
+    for (let p = rangeStart; p <= rangeEnd; p++) {
+        paginationContainer.appendChild(makeButton(String(p), p, false, p === currentPage));
+    }
+
+    if (rangeEnd < totalPages) {
+        if (rangeEnd < totalPages - 1) {
+            const dots = document.createElement('span');
+            dots.textContent = '...';
+            dots.style.cssText = 'padding:0 4px;color:var(--color-text-secondary,#888);';
+            paginationContainer.appendChild(dots);
+        }
+        paginationContainer.appendChild(makeButton(String(totalPages), totalPages));
+    }
+
+    // Next arrow
+    paginationContainer.appendChild(
+        makeButton('Next →', currentPage + 1, currentPage === totalPages)
+    );
+>>>>>>> e93bac245633b21ba562ae61a1af75b3054bc45e
 }
 
 function clearFilters() {
@@ -299,11 +411,19 @@ document.addEventListener("DOMContentLoaded", () => {
     // token existence is our fallback trigger.
     if (localStorage.getItem("adminToken")) {
         console.log("[history] fallback token present → loadHistory");
+<<<<<<< HEAD
         loadHistory(1);
+=======
+        loadHistory();
+>>>>>>> e93bac245633b21ba562ae61a1af75b3054bc45e
     }
 });
 
 window.addEventListener("admin-auth-ready", () => {
     console.log("[history] auth ready → loadHistory");
+<<<<<<< HEAD
     loadHistory(1);
+=======
+    loadHistory();
+>>>>>>> e93bac245633b21ba562ae61a1af75b3054bc45e
 });
