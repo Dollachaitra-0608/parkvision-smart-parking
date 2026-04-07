@@ -1,0 +1,39 @@
+{
+  "version": 1,
+  "author": "ParkVision",
+  "editor": "wokwi",
+  "parts": [
+    { "type": "board-esp32-devkit-c-v4", "id": "esp", "top": 0, "left": 0, "attrs": {} },
+    { "type": "wokwi-hc-sr04", "id": "entry_sensor", "top": -120, "left": -280, "attrs": { "distance": "50" } },
+    { "type": "wokwi-hc-sr04", "id": "exit_sensor",  "top": -120, "left": 200,  "attrs": { "distance": "50" } },
+    { "type": "wokwi-servo",   "id": "entry_servo",   "top": -220, "left": -380, "attrs": {} },
+    { "type": "wokwi-servo",   "id": "exit_servo",    "top": -220, "left": 310,  "attrs": {} },
+    { "type": "wokwi-pushbutton", "id": "entry_btn", "top": 160, "left": -280, "attrs": { "color": "green" } },
+    { "type": "wokwi-pushbutton", "id": "exit_btn",  "top": 160, "left": 200,  "attrs": { "color": "red" } },
+    { "type": "wokwi-led", "id": "entry_green", "top": -220, "left": -180, "attrs": { "color": "green" } },
+    { "type": "wokwi-led", "id": "entry_red",   "top": -220, "left": -140, "attrs": { "color": "red" } },
+    { "type": "wokwi-led", "id": "exit_green",  "top": -220, "left": 100,  "attrs": { "color": "green" } },
+    { "type": "wokwi-led", "id": "exit_red",    "top": -220, "left": 140,  "attrs": { "color": "red" } },
+    { "type": "wokwi-resistor", "id": "r1", "top": -175, "left": -182, "rotate": 90, "attrs": { "value": "220" } },
+    { "type": "wokwi-resistor", "id": "r2", "top": -175, "left": -142, "rotate": 90, "attrs": { "value": "220" } },
+    { "type": "wokwi-resistor", "id": "r3", "top": -175, "left": 98,   "rotate": 90, "attrs": { "value": "220" } },
+    { "type": "wokwi-resistor", "id": "r4", "top": -175, "left": 138,  "rotate": 90, "attrs": { "value": "220" } }
+  ],
+  "connections": [
+    ["esp:GND.1","entry_sensor:GND","black",["v0"]], ["esp:3V3","entry_sensor:VCC","red",["v0"]],
+    ["esp:5","entry_sensor:TRIG","green",["v0"]],    ["esp:18","entry_sensor:ECHO","yellow",["v0"]],
+    ["esp:GND.2","exit_sensor:GND","black",["v0"]],  ["esp:3V3","exit_sensor:VCC","red",["v0"]],
+    ["esp:14","exit_sensor:TRIG","green",["v0"]],    ["esp:27","exit_sensor:ECHO","yellow",["v0"]],
+    ["esp:19","entry_servo:PWM","white",["v0"]],     ["esp:3V3","entry_servo:V+","red",["v0"]],
+    ["esp:GND.1","entry_servo:GND","black",["v0"]],
+    ["esp:26","exit_servo:PWM","white",["v0"]],      ["esp:3V3","exit_servo:V+","red",["v0"]],
+    ["esp:GND.2","exit_servo:GND","black",["v0"]],
+    ["esp:4","entry_btn:1.l","green",["v0"]],        ["esp:GND.1","entry_btn:2.l","black",["v0"]],
+    ["esp:13","exit_btn:1.l","orange",["v0"]],       ["esp:GND.2","exit_btn:2.l","black",["v0"]],
+    ["esp:23","r1:1","green",["v0"]], ["r1:2","entry_green:A","green",["v0"]], ["entry_green:C","esp:GND.1","black",["v0"]],
+    ["esp:22","r2:1","red",["v0"]],   ["r2:2","entry_red:A","red",["v0"]],   ["entry_red:C","esp:GND.1","black",["v0"]],
+    ["esp:21","r3:1","green",["v0"]], ["r3:2","exit_green:A","green",["v0"]], ["exit_green:C","esp:GND.2","black",["v0"]],
+    ["esp:25","r4:1","red",["v0"]],   ["r4:2","exit_red:A","red",["v0"]],    ["exit_red:C","esp:GND.2","black",["v0"]]
+  ],
+  "dependencies": {}
+}

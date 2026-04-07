@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Parking Entry</title>
+    <link rel="stylesheet" href="/static/css/user.css">
+</head>
+<body>
+    <header class="header">
+        <div class="header-container">
+            <div class="logo">
+                <img src="/static/images/logo.png" alt="logo">
+                <span class="logo-text">Parkvision</span>
+            </div>
+            <div class="menu-icon" style="font-size: 1rem; opacity: 0.95;">
+                Entry Form
+            </div>
+        </div>
+    </header>
+
+    <main class="main-content" style="max-width: 520px;">
+        <div class="info-card" style="margin-bottom: 0;">
+            <div class="info-row" style="flex-direction: column; align-items: flex-start; gap: 1rem;">
+                <div style="width: 100%;">
+                    <label for="vehicleNo" class="info-label" style="display:block;">Vehicle Number</label>
+                    <input
+                        id="vehicleNo"
+                        type="text"
+                        placeholder="e.g. TS09UD0036"
+                        style="width:100%; padding: 0.85rem 1rem; border: 2px solid var(--border-color); border-radius: 12px; background: transparent; font-size: 1rem;"
+                    />
+                </div>
+
+                <div style="width: 100%;">
+                    <label for="vehicleType" class="info-label" style="display:block;">Vehicle Type</label>
+                    <select
+                        id="vehicleType"
+                        style="width:100%; padding: 0.85rem 1rem; border: 2px solid var(--border-color); border-radius: 12px; background: transparent; font-size: 1rem;"
+                    >
+                        <option value="" selected>Select vehicle type</option>
+                        <option value="bike">bike</option>
+                        <option value="car">car</option>
+                        <option value="heavy">heavy</option>
+                    </select>
+                </div>
+
+                <div id="recommendationBox" style="width:100%; margin-top: 0.25rem; display:none; padding: 0.8rem; border: 1px solid var(--border-color); border-radius: 10px;">
+                    <div style="font-weight:700; margin-bottom:0.4rem;">Smart Recommendation</div>
+                    <div>Best Level: <strong id="bestLevel">--</strong></div>
+                    <div>Best Slot: <strong id="bestSlot">--</strong></div>
+                    <div style="margin-top:0.4rem; color:#334155; font-weight:600;">Reasons:</div>
+                    <ul style="margin:0.25rem 0 0 1rem; color:#334155;" id="reasonList"></ul>
+                </div>
+
+                <div style="width:100%; margin-top: 0.5rem;">
+                    <button
+                        id="startParkingBtn"
+                        class="extend-btn"
+                        style="max-width: none;"
+                    >
+                        Start Parking
+                    </button>
+                </div>
+
+                <div id="entryMsg" style="color: #c2410c; font-weight: 700; margin-top: 0.25rem; min-height: 1.2rem;"></div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        (function () {
+            const btn = document.getElementById("startParkingBtn");
+            const vehicleNoEl = document.getElementById("vehicleNo");
+            const vehicleTypeEl = document.getElementById("vehicleType");
+            const msgEl = document.getElementById("entryMsg");
+            const recommendationBox = document.getElementById("recommendationBox");
+            const bestLevelEl = document.getElementById("bestLevel");
+            const bestSlotEl = document.getElementById("bestSlot");
+            const reasonListEl = document.getElementById("reasonList");
+            const BASE_URL = window.API_BASE_URL || "";
+            let isSubmitting = false;
+            const originalBtnText = btn ? btn.textContent : "Start Parking";
+
+            function showMsg(text) {
+                if (!msgEl) return;
+                msgEl.textContent = text || "";
+            }
+
+            function showRecommendation(data) {
+                if (!recommendationBox) return;
+                recommendationBox.style.display = "block";
+                if (bestLevelEl) bestLevelEl.textContent = data.best_level || "--";
+                if (bestSlotEl) bestSlotEl.textContent = data.best_slot || "--";
+                const reasons = Array.isArray(data.reasons) ? data.reasons : [];
+                if (reasonListEl) {
+                    reasonListEl.innerHTML = "";
+                    const finalReasons = reasons.length ? reasons : ["Best slot based on smart scoring."];
+                    finalReasons.forEach((reason) => {
+                        const li = document.createElement("li");
+                        li.textContent = `✔ ${reason}`;
+                        reasonListEl.appendChild(li);
+                    });
+                }
+            }
+
+            btn.addEventListener("click", async function () {
+                if (isSubmitting || btn.disabled) return;
+                isSubmitting = true;
+                btn.disabled = true;
+                btn.textContent = "Starting...";
+
+                const vehicle_no = (vehicleNoEl && vehicleNoEl.value ? vehicleNoEl.value : "").trim();
+                const vehicle_type = (vehicleTypeEl && vehicleTypeEl.value ? vehicleTypeEl.value : "").trim();
+
+                if (!vehicle_no) {
+                    showMsg("Vehicle number must not be empty.");
+                    isSubmitting = false;
+                    btn.disabled = false;
+                    btn.textContent = originalBtnText;
+                    return;
+                }
+                if (!vehicle_type) {
+                    showMsg("Select a vehicle type.");
+                    isSubmitting = false;
+                    btn.disabled = false;
+                    btn.textContent = originalBtnText;
+                    return;
+                }
+
+                try {
+                    console.log("[entry] requesting recommendation", { vehicle_no, vehicle_type });
+                    let selectedSlotId = null;
+                    const recRes = await fetch(`${BASE_URL}/api/recommend_slot`, {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ vehicle_no, vehicle_type })
+                    });
+                    const recData = await recRes.json().catch(() => ({}));
+                    if (recRes.ok) {
+                        showRecommendation(recData);
+                        selectedSlotId = recData.best_slot || null;
+                    }
+
+                    console.log("[entry] creating session", { vehicle_no, vehicle_type });
+                    const entryRes = await fetch(`${BASE_URL}/api/entry`, {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ vehicle_no, vehicle_type, slot_id: selectedSlotId })
+                    });
+                    const entryData = await entryRes.json().catch(() => ({}));
+                    if (!entryRes.ok) {
+                        showMsg(
+                            entryData.message || entryData.error || "Unable to start parking session."
+                        );
+                        isSubmitting = false;
+                        btn.disabled = false;
+                        btn.textContent = originalBtnText;
+                        return;
+                    }
+
+                    localStorage.setItem("vehicle_no", vehicle_no);
+                    localStorage.setItem("vehicle_type", vehicle_type);
+                    // allow re-allocation (if any previous exit left the guard flag)
+                    localStorage.removeItem("userExited");
+                    if (entryData.recommendation) {
+                        showRecommendation({
+                            best_level: entryData.recommendation.best_level,
+                            best_slot: entryData.recommendation.best_slot,
+                            reasons: entryData.recommendation.reasons || []
+                        });
+                    }
+                } catch (e) {
+                    console.error("[entry] localStorage failed", e);
+                    showMsg("Unable to process entry right now.");
+                    isSubmitting = false;
+                    btn.disabled = false;
+                    btn.textContent = originalBtnText;
+                    return;
+                }
+
+                showMsg("");
+
+                // Redirect immediately to dashboard; dashboard will call /api/status then /api/entry if needed.
+                window.location.href = "/user";
+                // No need to re-enable the button; navigation will occur.
+            });
+        })();
+    </script>
+</body>
+</html>
+

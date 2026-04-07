@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Parking Statistics</title>
+    <link rel="stylesheet" href="/static/css/statistics-styles.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.css" />
+    <script src="https://cdn.jsdelivr.net/npm/moment/moment.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.js"></script>
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="header-left">
+            <div class="logo">
+        <img src="/static/images/logo.png" alt="logo">
+        </div>
+        </div>
+        <nav class="nav-menu">
+            <a href="/admin" class="nav-link">Home</a>
+            <a href="/admin/history" class="nav-link">History</a>
+            <a href="/admin/statistics" class="nav-link active">Statistics</a>
+        </nav>
+        <div class="header-right">
+            <div class="user-dropdown">
+                <button class="user-btn">
+                    <span class="user-icon">👤</span>
+                    <span class="dropdown-arrow">▼</span>
+                </button>
+                <div class="dropdown-menu">
+                    <a href="#profile">Profile</a>
+                    <a href="#settings">Settings</a>
+                    <a href="#logout">Logout</a>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <div class="smart-insight-card" id="smartParkingInsight">
+            <h2 class="smart-insight-title">Smart Parking Insight</h2>
+
+            <div class="smart-insight-grid">
+                <section class="smart-insight-col smart-insight-left" aria-label="Current parking status">
+                    <div class="smart-stat">
+                        <div class="smart-stat-label">
+                            <span class="smart-icon" aria-hidden="true">🟢</span>
+                            <span>Current Status</span>
+                        </div>
+                        <div class="smart-stat-value">
+                            <span id="currentStatus" class="smart-status-text smart-pulse">--</span>
+                        </div>
+                    </div>
+
+                    <div class="smart-split-values">
+                        <div class="smart-mini">
+                            <div class="smart-mini-label">
+                                <span class="smart-icon" aria-hidden="true">📍</span>
+                                <span>Available</span>
+                            </div>
+                            <div class="smart-mini-value">
+                                <span id="availableSlots">--</span>
+                            </div>
+                        </div>
+
+                        <div class="smart-mini">
+                            <div class="smart-mini-label">
+                                <span class="smart-icon" aria-hidden="true">🚫</span>
+                                <span>Occupied</span>
+                            </div>
+                            <div class="smart-mini-value">
+                                <span id="occupiedSlots">--</span>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="smart-insight-col smart-insight-right" aria-label="AI prediction and advice">
+                    <div class="smart-stat">
+                        <div class="smart-stat-label">
+                            <span>Prediction</span>
+            
+                        </div>
+                        <div class="smart-stat-value">
+                            <span id="smartPrediction" class="smart-prediction-text smart-highlight">--</span>
+                        </div>
+                        <div class="smart-subtle-label">Based on current time prediction</div>
+                    </div>
+
+                    <div class="smart-confidence">
+                        <div class="smart-confidence-top">
+                            <div class="smart-confidence-label">
+                                <span class="smart-icon" aria-hidden="true">⚡</span>
+                                <span>Confidence</span>
+                            </div>
+                            <div class="smart-confidence-value">
+                                <span id="smartConfidence">--</span>
+                            </div>
+                        </div>
+                        <div class="confidence-progress" role="progressbar" aria-valuemin="0" aria-valuemax="100">
+                            <div id="smartConfidenceBar" class="confidence-progress-bar"></div>
+                        </div>
+                    </div>
+
+                    <div class="smart-advice" role="note" aria-label="Prediction advice">
+                        <div class="smart-advice-header">Advice</div>
+                        <div id="smartMessage" class="smart-advice-message">--</div>
+                    </div>
+                </section>
+            </div>
+        </div>
+
+        <!-- Stats Cards Section -->
+        <div class="stats-cards">
+            <!-- Vehicle Type Distribution Card -->
+            <div class="stat-card">
+                <h3 class="card-title">Vehicle Type Distribution</h3>
+                <div class="card-content">
+                    <canvas id="vehicleTypeChart" class="chart-canvas"></canvas>
+                    <div class="chart-legend">
+                        <div class="legend-item">
+                            <span class="legend-color" style="background-color: #5a8f5a;"></span>
+                            <span>Car</span>
+                        </div>
+                        <div class="legend-item">
+                            <span class="legend-color" style="background-color: #d4a574;"></span>
+                            <span>Bike</span>
+                        </div>
+                        <div class="legend-item">
+                            <span class="legend-color" style="background-color: #f5a649;"></span>
+                            <span>Heavy</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Revenue Card -->
+            <div class="stat-card">
+                <h3 class="card-title">Revenue</h3>
+                <div class="card-content revenue-content">
+                    <div class="amount">₹0.00</div>
+                    <div class="change positive">Based on selected range</div>
+                </div>
+            </div>
+
+            <!-- Average Parking Duration Card -->
+            <div class="stat-card">
+                <h3 class="card-title">Average Parking Duration</h3>
+                <div class="card-content duration-content">
+                    <div class="duration-icon">⏱</div>
+                    <div class="duration-text">2 hr 5 min</div>
+                </div>
+            </div>
+
+            <!-- Peak Hours Card -->
+            <div class="stat-card">
+                <h3 class="card-title">Peak Hours</h3>
+                <div class="card-content peak-content">
+                    <div class="peak-icon">📊</div>
+                    <div class="peak-time">11 AM – 1 PM</div>
+                </div>
+            </div>
+
+            <!-- Best Time Card -->
+            <div class="stat-card">
+                <h3 class="card-title">Best Time to Park</h3>
+                <div class="card-content best-content">
+                    <div class="best-icon">🕒</div>
+                    <div class="best-time">--</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Filters Section -->
+        <div class="filters-section">
+            <div class="filter-group">
+                <button class="filter-btn active">Today</button>
+                <button class="filter-btn">Yesterday</button>
+                <button class="filter-btn week-btn">This Week</button>
+            </div>
+            <div class="date-range">
+                <input type="date" id="startDate" class="filter-input filter-date">
+                <input type="date" id="endDate" class="filter-input filter-date">
+                <button class="btn btn-apply">Apply</button>
+            </div>
+        </div>
+
+        <!-- Charts Section -->
+        <div class="charts-section">
+            <!-- Revenue Over Time Chart -->
+            <div class="chart-card">
+                <div class="chart-header">
+                    <h3>Revenue Over Time</h3>
+                    <div class="chart-filters">
+                        <span class="chart-filter-tag">Today</span>
+                        <span class="chart-filter-tag">Yesterday</span>
+                        <span class="chart-filter-tag">This Week</span>
+                        <span class="chart-filter-tag custom">Custom</span>
+                    </div>
+                </div>
+                <div class="chart-container">
+                    <canvas id="revenueChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Parking Sessions Chart -->
+            <div class="chart-card">
+                <div class="chart-header">
+                    <h3>Parking Sessions</h3>
+                </div>
+                <div class="chart-container">
+                    <canvas id="sessionsChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script src="/static/js/admin-auth.js"></script>
+    <script src="/static/js/statistics-script.js"></script>
+
+    <script>
+        // Enhances the Smart Parking Insight UI while keeping existing IDs/JS behavior intact.
+        document.addEventListener("DOMContentLoaded", () => {
+            const card = document.getElementById("smartParkingInsight");
+
+            const statusEl = document.getElementById("currentStatus");
+
+            const predictionEl = document.getElementById("smartPrediction");
+            const confidenceEl = document.getElementById("smartConfidence");
+
+            const barEl = document.getElementById("smartConfidenceBar");
+
+            function parsePercentFromText(txt) {
+                const cleaned = String(txt || "").replace(/[^0-9.]/g, "");
+                const n = parseFloat(cleaned);
+                return Number.isFinite(n) ? Math.max(0, Math.min(100, n)) : null;
+            }
+
+            function setTierClass(confPercent) {
+                if (!card) return;
+                card.classList.remove("conf-low", "conf-mid", "conf-high");
+                if (confPercent === null) return;
+
+                if (confPercent < 40) card.classList.add("conf-low");
+                else if (confPercent < 75) card.classList.add("conf-mid");
+                else card.classList.add("conf-high");
+            }
+
+            function applyDynamicColors() {
+                if (!statusEl || !predictionEl || !confidenceEl) return;
+
+                const statusText = String(statusEl.textContent || "").trim().toLowerCase();
+                statusEl.classList.remove("is-free", "is-busy");
+                if (statusText.includes("free")) statusEl.classList.add("is-free");
+                else if (statusText.includes("busy")) statusEl.classList.add("is-busy");
+
+                const predText = String(predictionEl.textContent || "").trim().toLowerCase();
+                predictionEl.classList.remove("is-high", "is-low");
+                if (predText.includes("high")) predictionEl.classList.add("is-high");
+                else if (predText.includes("low")) predictionEl.classList.add("is-low");
+
+                card.classList.remove("pred-high", "pred-low");
+                if (predText.includes("high")) card.classList.add("pred-high");
+                else if (predText.includes("low")) card.classList.add("pred-low");
+
+                const confPercent = parsePercentFromText(confidenceEl.textContent);
+                setTierClass(confPercent);
+
+                if (barEl && confPercent !== null) {
+                    barEl.style.width = `${confPercent}%`;
+                    barEl.setAttribute("aria-valuenow", String(confPercent));
+                }
+            }
+
+            function refreshSmartUI() {
+                // Force a layout-free update by only touching class/style and text already set by loadSmartStatus().
+                applyDynamicColors();
+            }
+
+            // Initial paint: loadSmartStatus() runs on DOMContentLoaded inside statistics-script.js.
+            setTimeout(refreshSmartUI, 600);
+
+            if (typeof loadSmartStatus === "function") {
+                setInterval(async () => {
+                    try {
+                        await loadSmartStatus();
+                    } catch (e) {
+                        console.error("Smart status refresh error", e);
+                    } finally {
+                        refreshSmartUI();
+                    }
+                }, 10000);
+            }
+        });
+    </script>
+</body>
+</html>

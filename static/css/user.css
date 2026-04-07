@@ -1,0 +1,485 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+:root {
+    --primary-dark: #3d1a3d;
+    --primary-accent: #d97706;
+    --secondary-accent: #2d1445;
+    --background: #e8d4c0;
+    --text-dark: #1a1a1a;
+    --text-muted: #555;
+    --border-color: #d4a574;
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: var(--background);
+    color: var(--text-dark);
+    line-height: 1.6;
+}
+
+/* ============ HEADER ============ */
+.header {
+    background-color: var(--primary-dark);
+    padding: 0;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.header-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem 2rem;
+}
+
+.logo {
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+    font-size: 1.8rem;
+    font-weight: bold;
+    color: white;
+}
+
+.logo img { 
+            width: 60px;   
+            height: 70px;
+            border-radius: 5px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+        }
+
+.logo-text {
+    letter-spacing: 0.5px;
+}
+.menu-icon {
+  font-size: 24px;
+  cursor: pointer;
+  color: white;
+}
+
+.dropdown {
+  display: none;
+  position: absolute;
+  right: 20px;
+  top: 60px;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 3px 10px rgba(0,0,0,0.2);
+  overflow: hidden;
+}
+
+.dropdown a {
+  display: block;
+  padding: 12px 20px;
+  text-decoration: none;
+  color: black;
+}
+
+.dropdown a:hover {
+  background: #f3f3f3;
+}
+
+/* Menu Button */
+.menu-btn {
+    display: none;
+    flex-direction: column;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0.5rem;
+}
+
+.menu-btn span {
+    width: 25px;
+    height: 3px;
+    background-color: white;
+    margin: 5px 0;
+    transition: 0.3s ease;
+    border-radius: 2px;
+}
+
+.menu-btn.active span:nth-child(1) {
+    transform: rotate(45deg) translate(10px, 10px);
+}
+
+.menu-btn.active span:nth-child(2) {
+    opacity: 0;
+}
+
+.menu-btn.active span:nth-child(3) {
+    transform: rotate(-45deg) translate(7px, -7px);
+}
+
+/* ============ MAIN CONTENT ============ */
+.main-content {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 2rem;
+}
+
+/* Info Card */
+.info-card {
+    background-color: #e8d4c0;
+    border: 2px solid var(--border-color);
+    border-radius: 20px;
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.info-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 2rem;
+    margin-bottom: 1rem;
+}
+
+.info-item {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    flex: 1;
+}
+
+.info-icon {
+    font-size: 2rem;
+}
+
+.info-label {
+    display: block;
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    font-weight: 500;
+    margin-bottom: 0.2rem;
+}
+
+.info-value {
+    display: block;
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: var(--text-dark);
+}
+
+.divider {
+    border: none;
+    border-top: 2px solid var(--border-color);
+    margin: 1rem 0;
+}
+
+.vehicle-info {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    
+}
+
+.vehicle-icon {
+    font-size: 1.8rem;
+}
+
+/* ============ TIMER & PAYMENT CONTAINER ============ */
+.timer-payment-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 1.5rem;
+    background-color: #e8d4c0;
+    border: 2px solid var(--border-color);
+    border-radius: 20px;
+    padding: 2rem;
+}
+
+.section-title {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--text-dark);
+    margin-bottom: 1rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* Timer Section */
+.timer-section {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+}
+
+.timer {
+    font-size: clamp(2rem, 6vw, 3.5rem);
+    font-weight: 900;
+    color: var(--text-dark);
+    font-family: 'Courier New', monospace;
+    margin: 1rem 0;
+    letter-spacing: 2px;
+}
+
+.extend-btn {
+    background-color: var(--primary-accent);
+    color: white;
+    border: none;
+    padding: 0.8rem 2rem;
+    border-radius: 50px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    margin-top: 1rem;
+    width: 100%;
+    max-width: 200px;
+}
+
+.extend-btn:hover {
+    background-color: #c26a00;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(217, 119, 6, 0.3);
+}
+
+.extend-btn:active {
+    transform: translateY(0);
+}
+
+.extend-options {
+  margin-top: 10px;
+  display: none;
+  gap: 10px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.extend-options button {
+  background-color: #f3e3c7;
+  border: 1px solid #d89a5b;
+  color: #4b1f45;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+/* Hover */
+.extend-options button:hover {
+  background-color: #e6c79c;
+  transform: translateY(-1px);
+}
+
+/* Click effect */
+.extend-options button:active {
+  transform: scale(0.95);
+}
+
+/* Show buttons in a row */
+.extend-options {
+  display: flex;
+}
+
+
+/* Details Section */
+.details-section {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 2rem;
+    padding: 0 1rem;
+    border-left: 2px solid var(--border-color);
+    border-right: 2px solid var(--border-color);
+}
+
+.detail-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+}
+
+.detail-label {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    font-weight: 500;
+    margin-bottom: 0.5rem;
+}
+
+.detail-value {
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: var(--text-dark);
+    font-family: 'Courier New', monospace;
+}
+
+/* Payment Section */
+.payment-section {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.payment-item {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 0.8rem;
+    font-size: 0.95rem;
+}
+
+.payment-item span:first-child {
+    color: var(--text-muted);
+}
+
+.payment-value {
+    font-weight: 600;
+    color: var(--text-dark);
+}
+
+.payment-total {
+    display: flex;
+    justify-content: space-between;
+    padding-top: 0.8rem;
+    border-top: 2px solid var(--border-color);
+    margin-bottom: 1rem;
+    font-weight: 700;
+    font-size: 1.1rem;
+}
+
+.total-value {
+    color: var(--text-dark);
+}
+
+.pay-btn {
+    background-color: var(--secondary-accent);
+    color: white;
+    border: none;
+    width: 100%;
+    padding: 0.8rem 1.5rem;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.pay-btn:hover {
+    background-color: #1a0d2e;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(45, 20, 69, 0.3);
+}
+
+.pay-btn:active {
+    transform: translateY(0);
+}
+
+/* ============ RESPONSIVE DESIGN ============ */
+@media (max-width: 768px) {
+    .header-container {
+        padding: 1rem 1.5rem;
+    }
+
+    .menu-btn {
+        display: flex;
+    }
+
+    .logo-text {
+        display: none;
+    }
+
+    .main-content {
+        padding: 1rem;
+    }
+
+    .info-card {
+        padding: 1rem;
+    }
+
+    .info-row {
+        flex-direction: column;
+        gap: 1rem;
+    }
+
+    .timer-payment-container {
+        grid-template-columns: 1fr;
+        gap: 1.5rem;
+        padding: 1.5rem;
+    }
+
+    .details-section {
+        border-left: none;
+        border-right: none;
+        border-bottom: 2px solid var(--border-color);
+        padding-bottom: 1rem;
+        padding-left: 0;
+        padding-right: 0;
+    }
+
+    .timer {
+        font-size: 2.5rem;
+    }
+
+    .detail-value {
+        font-size: 1.5rem;
+    }
+
+    .payment-item {
+        font-size: 0.9rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .header-container {
+        padding: 0.75rem 1rem;
+    }
+
+    .logo-icon {
+        font-size: 1.8rem;
+    }
+
+    .main-content {
+        padding: 0.75rem;
+    }
+
+    .info-card {
+        padding: 0.75rem;
+        border-radius: 15px;
+    }
+
+    .info-item {
+        gap: 0.75rem;
+    }
+
+    .info-icon {
+        font-size: 1.5rem;
+    }
+
+    .info-value {
+        font-size: 1.1rem;
+    }
+
+    .timer-payment-container {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+        padding: 1rem;
+        border-radius: 15px;
+    }
+
+    .timer {
+        font-size: 2rem;
+    }
+
+    .detail-value {
+        font-size: 1.3rem;
+    }
+
+    .section-title {
+        font-size: 0.9rem;
+        margin-bottom: 0.75rem;
+    }
+}

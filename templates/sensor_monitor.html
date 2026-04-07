@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ParkVision – Arduino Sensor Monitor</title>
+  <style>
+    :root {
+      --bg: #0f1117;
+      --card: #1a1d27;
+      --border: #2a2d3e;
+      --green: #22c55e;
+      --red: #ef4444;
+      --yellow: #f59e0b;
+      --blue: #3b82f6;
+      --text: #e2e8f0;
+      --muted: #94a3b8;
+      --radius: 12px;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      padding: 24px 16px;
+    }
+    header {
+      text-align: center;
+      margin-bottom: 32px;
+    }
+    header h1 { font-size: 1.6rem; font-weight: 700; }
+    header p  { color: var(--muted); margin-top: 6px; font-size: 0.9rem; }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 20px;
+      max-width: 900px;
+      margin: 0 auto 32px;
+    }
+
+    .slot-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 24px 20px;
+      text-align: center;
+      transition: border-color 0.3s;
+      position: relative;
+    }
+    .slot-card.free     { border-color: var(--green); }
+    .slot-card.occupied { border-color: var(--red); }
+
+    .led {
+      width: 18px; height: 18px;
+      border-radius: 50%;
+      margin: 0 auto 14px;
+      background: #333;
+      transition: background 0.4s, box-shadow 0.4s;
+    }
+    .slot-card.free     .led { background: var(--green); box-shadow: 0 0 12px var(--green); }
+    .slot-card.occupied .led { background: var(--red);   box-shadow: 0 0 12px var(--red);   }
+
+    .slot-label { font-size: 1.1rem; font-weight: 600; margin-bottom: 6px; }
+    .slot-id    { color: var(--muted); font-size: 0.8rem; margin-bottom: 14px; }
+    .slot-status {
+      display: inline-block;
+      padding: 4px 14px;
+      border-radius: 999px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+    }
+    .slot-card.free     .slot-status { background: rgba(34,197,94,0.15);  color: var(--green); }
+    .slot-card.occupied .slot-status { background: rgba(239,68,68,0.15);  color: var(--red);   }
+    .slot-distance { color: var(--muted); font-size: 0.8rem; margin-top: 10px; }
+
+    /* LCD panel */
+    .lcd-panel {
+      max-width: 360px;
+      margin: 0 auto 32px;
+      background: #1a2e1a;
+      border: 2px solid #2d5a27;
+      border-radius: var(--radius);
+      padding: 18px 24px;
+      font-family: 'Courier New', monospace;
+    }
+    .lcd-label { color: #4ade80; font-size: 0.7rem; letter-spacing: 0.1em; margin-bottom: 10px; opacity: 0.7; }
+    .lcd-line  { color: #4ade80; font-size: 1rem; letter-spacing: 0.06em; min-height: 1.4em; }
+
+    /* Gate panel */
+    .gate-panel {
+      max-width: 500px;
+      margin: 0 auto 32px;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px;
+    }
+    .gate-panel h3 { font-size: 0.9rem; color: var(--muted); margin-bottom: 14px; }
+    .gate-mode {
+      display: inline-block;
+      padding: 4px 16px;
+      border-radius: 999px;
+      font-weight: 700;
+      font-size: 0.85rem;
+      margin-bottom: 10px;
+    }
+    .gate-mode.entry { background: rgba(59,130,246,0.15); color: var(--blue); }
+    .gate-mode.exit  { background: rgba(239,68,68,0.15);  color: var(--red);  }
+    .gate-msg { font-size: 0.9rem; color: var(--text); }
+
+    /* Summary bar */
+    .summary {
+      max-width: 500px;
+      margin: 0 auto 32px;
+      display: flex;
+      gap: 12px;
+    }
+    .summary-box {
+      flex: 1;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 16px;
+      text-align: center;
+    }
+    .summary-box .val { font-size: 2rem; font-weight: 700; }
+    .summary-box .lbl { color: var(--muted); font-size: 0.78rem; margin-top: 4px; }
+    .summary-box.free-box  .val { color: var(--green); }
+    .summary-box.occ-box   .val { color: var(--red);   }
+    .summary-box.total-box .val { color: var(--blue);  }
+
+    .footer {
+      text-align: center;
+      color: var(--muted);
+      font-size: 0.78rem;
+      margin-top: 16px;
+    }
+    .last-update { text-align: center; color: var(--muted); font-size: 0.78rem; margin-bottom: 24px; }
+    .back-link {
+      display: block;
+      text-align: center;
+      margin-bottom: 28px;
+      color: var(--blue);
+      text-decoration: none;
+      font-size: 0.85rem;
+    }
+    .back-link:hover { text-decoration: underline; }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>⚙️ Arduino Sensor Monitor</h1>
+  <p>Live view of the 3 ultrasonic parking sensors from the Wokwi simulation</p>
+</header>
+
+<a class="back-link" href="/admin">← Back to Admin Dashboard</a>
+
+<div class="summary">
+  <div class="summary-box total-box">
+    <div class="val" id="sumTotal">3</div>
+    <div class="lbl">Total Slots</div>
+  </div>
+  <div class="summary-box free-box">
+    <div class="val" id="sumFree">–</div>
+    <div class="lbl">Free</div>
+  </div>
+  <div class="summary-box occ-box">
+    <div class="val" id="sumOcc">–</div>
+    <div class="lbl">Occupied</div>
+  </div>
+</div>
+
+<div class="grid" id="slotGrid">
+  <!-- Slot cards injected by JS -->
+</div>
+
+<div class="lcd-panel">
+  <div class="lcd-label">LCD DISPLAY (Arduino)</div>
+  <div class="lcd-line" id="lcd1">Loading…</div>
+  <div class="lcd-line" id="lcd2">&nbsp;</div>
+</div>
+
+<div class="gate-panel">
+  <h3>🚧 Gate Controller</h3>
+  <div class="gate-mode entry" id="gateMode">ENTRY</div>
+  <div class="gate-msg" id="gateMsg">Vehicle detected. Scan QR / Open entry form</div>
+</div>
+
+<div class="last-update">Last updated: <span id="lastUpdate">—</span></div>
+
+<div class="footer">Polling /api/sensor/status every 3 s &nbsp;|&nbsp; /api/gate_state every 5 s</div>
+
+<script>
+const SENSOR_SLOTS = ['G1-1', 'G1-2', 'G1-3'];
+const THRESHOLD_CM = 100;
+
+// Build initial cards
+const grid = document.getElementById('slotGrid');
+SENSOR_SLOTS.forEach((id, i) => {
+  const card = document.createElement('div');
+  card.className = 'slot-card';
+  card.id = `card-${id}`;
+  card.innerHTML = `
+    <div class="led" id="led-${id}"></div>
+    <div class="slot-label">Sensor ${i + 1}</div>
+    <div class="slot-id">${id}</div>
+    <div class="slot-status" id="status-${id}">—</div>
+    <div class="slot-distance" id="dist-${id}"></div>
+  `;
+  grid.appendChild(card);
+});
+
+function lcdMessage(slots) {
+  const free = slots.filter(s => s.status === 'available').map((_, i) => i + 1);
+  const n = free.length;
+  if (n === 3) return ['3 Slots Free', 'Slot 1 2 3 Free'];
+  if (n === 2) return ['2 Slots Free', `Slot ${free[0]} & ${free[1]} Free`];
+  if (n === 1) return ['1 Slot Free',  `Slot ${free[0]} Free`];
+  return ['No Slot Free', 'Parking Full'];
+}
+
+async function pollSensors() {
+  try {
+    const resp = await fetch(`/api/sensor/status?slots=${SENSOR_SLOTS.join(',')}`);
+    if (!resp.ok) return;
+    const data = await resp.json();
+    const slots = data.slots || [];
+
+    // Order slots to match SENSOR_SLOTS array
+    const ordered = SENSOR_SLOTS.map(id => slots.find(s => s.slot_id === id) || { slot_id: id, status: 'unknown' });
+
+    ordered.forEach((s, i) => {
+      const id  = s.slot_id;
+      const occ = s.status === 'occupied';
+      const card = document.getElementById(`card-${id}`);
+      if (card) {
+        card.className = `slot-card ${occ ? 'occupied' : 'free'}`;
+        document.getElementById(`status-${id}`).textContent = occ ? 'OCCUPIED' : 'FREE';
+        const dcm = s.sensor_distance_cm;
+        document.getElementById(`dist-${id}`).textContent = dcm != null ? `${dcm} cm` : '';
+      }
+    });
+
+    // Summary
+    document.getElementById('sumTotal').textContent = data.summary?.total ?? slots.length;
+    document.getElementById('sumFree').textContent  = data.summary?.free  ?? '–';
+    document.getElementById('sumOcc').textContent   = data.summary?.occupied ?? '–';
+
+    // LCD
+    const [l1, l2] = lcdMessage(ordered);
+    document.getElementById('lcd1').textContent = l1;
+    document.getElementById('lcd2').textContent = l2;
+
+    document.getElementById('lastUpdate').textContent = new Date().toLocaleTimeString();
+  } catch (e) {
+    console.warn('Sensor poll error:', e);
+  }
+}
+
+async function pollGate() {
+  try {
+    const resp = await fetch('/api/gate_state');
+    if (!resp.ok) return;
+    const g = await resp.json();
+    const modeEl = document.getElementById('gateMode');
+    modeEl.textContent = (g.mode || 'entry').toUpperCase();
+    modeEl.className   = `gate-mode ${g.mode || 'entry'}`;
+    document.getElementById('gateMsg').textContent = g.message || '';
+  } catch (e) { /* ignore */ }
+}
+
+pollSensors();
+pollGate();
+setInterval(pollSensors, 3000);
+setInterval(pollGate,    5000);
+</script>
+</body>
+</html>
